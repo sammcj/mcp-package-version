@@ -6,9 +6,9 @@ An MCP server that provides tools for checking latest stable package versions fr
 
 1. **Clone and Install Dependencies**
    ```bash
-   git clone <repository-url>
-   cd package-version-server
-   npm install
+   git clone https://github.com/sammcj/mcp-package-version.git
+   cd mcp-package-version
+   npm i
    ```
 
 2. **Build the Server**
@@ -22,8 +22,8 @@ An MCP server that provides tools for checking latest stable package versions fr
    {
      "mcpServers": {
        "package-version": {
-         "command": "node",
-         "args": ["/path/to/package-version-server/build/index.js"]
+         "command": "npx",
+         "args": ["-y", "mcp-package-version"]
        }
      }
    }
