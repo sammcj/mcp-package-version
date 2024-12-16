@@ -2,41 +2,26 @@
 
 An MCP server that provides tools for checking latest stable package versions from npm and PyPI registries. This server helps LLMs ensure they're recommending up-to-date package versions when writing code.
 
-## Building and Running
+## Running
 
-1. **Clone and Install Dependencies**
-   ```bash
-   git clone https://github.com/sammcj/mcp-package-version.git
-   cd mcp-package-version
-   npm i
-   ```
+**Configure MCP Settings**
 
-2. **Build the Server**
-   ```bash
-   npm run build
-   ```
+Add the following to your MCP settings file:
 
-3. **Configure MCP Settings**
-   Add the following to your MCP settings file:
-   ```json
-   {
-     "mcpServers": {
-       "package-version": {
-         "command": "npx",
-         "args": ["-y", "mcp-package-version"]
-       }
-     }
-   }
-   ```
-   - For the Cline VSCode Extension this will be `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
-   - For Claude Desktop `~/Library/Application\ Support/Claude/claude_desktop_config.json`
-   - For GoMCP `~/.config/gomcp/config.yaml`
+```json
+{
+  "mcpServers": {
+    "package-version": {
+      "command": "npx",
+      "args": ["-y", "mcp-package-version"]
+    }
+  }
+}
+```
 
-4. **Development**
-   - Use `npm run watch` for development to automatically rebuild on changes
-   - Use `npm run build` for production builds
-
-No environment variables are required as this server uses public npm and PyPI registries.
+- For the Cline VSCode Extension this will be `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
+- For Claude Desktop `~/Library/Application\ Support/Claude/claude_desktop_config.json`
+- For GoMCP `~/.config/gomcp/config.yaml`
 
 ## Tools
 
@@ -244,6 +229,26 @@ Example system prompt for users:
 ```plaintext
 When writing code that includes dependencies, you must check latest stable versions using the package-version MCP server before writing package.json or requirements.txt files. Use exact versions for applications and compatible ranges for libraries. Document any version-specific requirements or failed checks in comments.
 ```
+
+## Building and Running
+
+1. **Clone and Install Dependencies**
+   ```bash
+   git clone https://github.com/sammcj/mcp-package-version.git
+   cd mcp-package-version
+   npm i
+   ```
+
+2. **Build the Server**
+   ```bash
+   npm run build
+   ```
+
+3. **Development**
+   - Use `npm run watch` for development to automatically rebuild on changes
+   - Use `npm run build` for production builds
+
+No environment variables are required as this server uses public npm and PyPI registries.
 
 ## License
 
