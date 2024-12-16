@@ -6,12 +6,22 @@
     "name": "Sam McLeod",
     "url": "https://smcleod.net"
   },
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "package",
+    "version",
+    "requirements.txt",
+    "package.json",
+    "npm",
+    "pip"
+  ],
   "bugs": {
     "url": "https://github.com/sammcj/mcp-package-version"
   },
   "type": "module",
   "bin": {
-    "package-version": "./build/index.js"
+    "package-version": "build/index.js"
   },
   "files": [
     "build"
@@ -20,7 +30,8 @@
     "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
     "prepare": "npm run build",
     "watch": "tsc --watch",
-    "inspector": "npx @modelcontextprotocol/inspector build/index.js"
+    "inspector": "npx @modelcontextprotocol/inspector build/index.js",
+    "bump": "npx -y standard-version"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.0.3",
