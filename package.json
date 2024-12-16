@@ -1,0 +1,34 @@
+{
+  "name": "package-version",
+  "version": "0.1.0",
+  "description": "An MCP server to provide LLMs the latest (stable) version of packages in package.json and requirements.txt files",
+  "author": {
+    "name": "Sam McLeod",
+    "url": "https://smcleod.net"
+  },
+  "bugs": {
+    "url": "https://github.com/sammcj/mcp-package-version"
+  },
+  "type": "module",
+  "bin": {
+    "package-version": "./build/index.js"
+  },
+  "files": [
+    "build"
+  ],
+  "scripts": {
+    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
+    "prepare": "npm run build",
+    "watch": "tsc --watch",
+    "inspector": "npx @modelcontextprotocol/inspector build/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.0.3",
+    "axios": "1.7.9",
+    "semver": "7.6.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  }
+}
