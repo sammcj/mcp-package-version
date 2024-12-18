@@ -14,7 +14,7 @@ interface PackageVersion {
   name: string
   currentVersion?: string
   latestVersion: string
-  registry: 'npm' | 'pypi'
+  registry: 'npm' | 'pypi' | 'maven'
 }
 
 interface PyProjectDependencies {
@@ -23,10 +23,25 @@ interface PyProjectDependencies {
   'dev-dependencies'?: { [key: string]: string }
 }
 
+interface MavenDependency {
+  groupId: string
+  artifactId: string
+  version?: string
+  scope?: string
+}
+
+interface GradleDependency {
+  configuration: string
+  group: string
+  name: string
+  version?: string
+}
+
 class PackageVersionServer {
   private server: Server
   private npmRegistry = 'https://registry.npmjs.org';
   private pypiRegistry = 'https://pypi.org/pypi';
+  private mavenRegistry = 'https://search.maven.org/solrsearch/select';
 
   constructor() {
     this.server = new Server(
@@ -53,6 +68,78 @@ class PackageVersionServer {
   private setupToolHandlers() {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: [
+        {
+          name: 'check_maven_versions',
+          description: 'Check latest stable versions for Java packages in pom.xml',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              dependencies: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    groupId: {
+                      type: 'string',
+                      description: 'Maven group ID',
+                    },
+                    artifactId: {
+                      type: 'string',
+                      description: 'Maven artifact ID',
+                    },
+                    version: {
+                      type: 'string',
+                      description: 'Current version (optional)',
+                    },
+                    scope: {
+                      type: 'string',
+                      description: 'Dependency scope (e.g., compile, test, provided)',
+                    },
+                  },
+                  required: ['groupId', 'artifactId'],
+                },
+                description: 'Array of Maven dependencies',
+              },
+            },
+            required: ['dependencies'],
+          },
+        },
+        {
+          name: 'check_gradle_versions',
+          description: 'Check latest stable versions for Java packages in build.gradle',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              dependencies: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    configuration: {
+                      type: 'string',
+                      description: 'Gradle configuration (e.g., implementation, testImplementation)',
+                    },
+                    group: {
+                      type: 'string',
+                      description: 'Package group',
+                    },
+                    name: {
+                      type: 'string',
+                      description: 'Package name',
+                    },
+                    version: {
+                      type: 'string',
+                      description: 'Current version (optional)',
+                    },
+                  },
+                  required: ['configuration', 'group', 'name'],
+                },
+                description: 'Array of Gradle dependencies',
+              },
+            },
+            required: ['dependencies'],
+          },
+        },
         {
           name: 'check_pyproject_versions',
           description: 'Check latest stable versions for Python packages in pyproject.toml',
@@ -165,6 +252,10 @@ class PackageVersionServer {
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       switch (request.params.name) {
+        case 'check_maven_versions':
+          return this.handleMavenVersionCheck(request.params.arguments)
+        case 'check_gradle_versions':
+          return this.handleGradleVersionCheck(request.params.arguments)
         case 'check_pyproject_versions':
           return this.handlePyProjectVersionCheck(request.params.arguments)
         case 'check_npm_versions':
@@ -215,6 +306,122 @@ class PackageVersionServer {
         ErrorCode.InternalError,
         `Failed to fetch npm package ${packageName}`
       )
+    }
+  }
+
+  private async getMavenPackageVersion(
+    groupId: string,
+    artifactId: string,
+    currentVersion?: string,
+    scope?: string
+  ): Promise<PackageVersion> {
+    try {
+      const query = `g:"${groupId}" AND a:"${artifactId}"`
+      const response = await axios.get(this.mavenRegistry, {
+        params: {
+          q: query,
+          core: 'gav',
+          rows: 1,
+          wt: 'json',
+        },
+      })
+
+      const doc = response.data?.response?.docs?.[0]
+      if (!doc?.latestVersion) {
+        throw new Error('Latest version not found')
+      }
+
+      const name = scope
+        ? `${groupId}:${artifactId} (${scope})`
+        : `${groupId}:${artifactId}`
+
+      const result: PackageVersion = {
+        name,
+        latestVersion: doc.latestVersion,
+        registry: 'maven',
+      }
+
+      if (currentVersion) {
+        result.currentVersion = currentVersion
+      }
+
+      return result
+    } catch (error) {
+      console.error(`Error fetching Maven package ${groupId}:${artifactId}:`, error)
+      throw new McpError(
+        ErrorCode.InternalError,
+        `Failed to fetch Maven package ${groupId}:${artifactId}`
+      )
+    }
+  }
+
+  private async handleMavenVersionCheck(args: any) {
+    if (!args.dependencies || !Array.isArray(args.dependencies)) {
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        'Invalid Maven dependencies array'
+      )
+    }
+
+    const results: PackageVersion[] = []
+    for (const dep of args.dependencies) {
+      if (!dep.groupId || !dep.artifactId) continue
+
+      try {
+        const result = await this.getMavenPackageVersion(
+          dep.groupId,
+          dep.artifactId,
+          dep.version,
+          dep.scope
+        )
+        results.push(result)
+      } catch (error) {
+        console.error(`Error checking Maven package ${dep.groupId}:${dep.artifactId}:`, error)
+      }
+    }
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(results, null, 2),
+        },
+      ],
+    }
+  }
+
+  private async handleGradleVersionCheck(args: any) {
+    if (!args.dependencies || !Array.isArray(args.dependencies)) {
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        'Invalid Gradle dependencies array'
+      )
+    }
+
+    const results: PackageVersion[] = []
+    for (const dep of args.dependencies) {
+      if (!dep.group || !dep.name || !dep.configuration) continue
+
+      try {
+        const result = await this.getMavenPackageVersion(
+          dep.group,
+          dep.name,
+          dep.version,
+          dep.configuration
+        )
+        results.push(result)
+      } catch (error) {
+        console.error(`Error checking Gradle package ${dep.group}:${dep.name}:`, error)
+      }
+    }
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(results, null, 2),
+        },
+      ],
     }
   }
 
