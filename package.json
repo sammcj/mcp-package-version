@@ -35,7 +35,7 @@
     "prepare": "npm run build",
     "watch": "tsc --watch",
     "inspector": "npx @modelcontextprotocol/inspector build/index.js",
-    "bump": "npx -y standard-version --skip.tag && git add . && git commit -m 'chore: bump version' && git push"
+    "bump": "npx -y standard-version --skip.tag && git add . ; git commit -m 'chore: bump version' ; git push"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.0.4",
