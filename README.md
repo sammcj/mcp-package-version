@@ -2,6 +2,10 @@
 
 An MCP server that provides tools for checking latest stable package versions from npm and PyPI registries. This server helps LLMs ensure they're recommending up-to-date package versions when writing code.
 
+## Screenshot
+
+![tooling with and without mcp-package-version](images/with-without.jpg)
+
 ## Running
 
 **Configure MCP Settings**
@@ -22,6 +26,7 @@ Add the following to your MCP settings file:
 - For the Cline VSCode Extension this will be `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
 - For Claude Desktop `~/Library/Application\ Support/Claude/claude_desktop_config.json`
 - For GoMCP `~/.config/gomcp/config.yaml`
+
 
 ## Tools
 
