@@ -1,6 +1,13 @@
 # Package Version MCP Server
 
-An MCP server that provides tools for checking latest stable package versions from npm and PyPI registries. This server helps LLMs ensure they're recommending up-to-date package versions when writing code.
+An MCP server that provides tools for checking latest stable package versions from multiple package registries:
+
+- npm (Node.js/JavaScript)
+- PyPI (Python)
+- Maven Central (Java)
+- Go Proxy (Go)
+
+This server helps LLMs ensure they're recommending up-to-date package versions when writing code.
 
 ## Screenshot
 
@@ -30,7 +37,9 @@ Add the following to your MCP settings file:
 
 ## Tools
 
-### 1. check_npm_versions
+### 1. JavaScript/Node.js
+
+#### check_npm_versions
 
 Check latest stable versions for npm packages from a package.json dependencies object.
 
@@ -47,9 +56,38 @@ use_mcp_tool({
 });
 ```
 
-### 2. check_python_versions
+### 2. Python
+
+#### check_python_versions
 
 Check latest stable versions for Python packages from requirements.txt entries.
+
+#### check_pyproject_versions
+
+Check latest stable versions for Python packages from pyproject.toml.
+
+```typescript
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_pyproject_versions",
+  arguments: {
+    dependencies: {
+      dependencies: {
+        "requests": "^2.28.0",
+        "pandas": ">=1.5.0"
+      },
+      "optional-dependencies": {
+        "test": {
+          "pytest": ">=7.0.0"
+        }
+      },
+      "dev-dependencies": {
+        "black": "^22.0.0"
+      }
+    }
+  }
+});
+```
 
 ```typescript
 use_mcp_tool({
@@ -64,7 +102,84 @@ use_mcp_tool({
 });
 ```
 
-### 3. check_package_versions
+### 3. Go
+
+#### check_go_versions
+
+Check latest stable versions for Go packages from go.mod.
+
+```typescript
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_go_versions",
+  arguments: {
+    dependencies: {
+      module: "example.com/mymodule",
+      require: [
+        {
+          path: "github.com/gin-gonic/gin",
+          version: "v1.7.0"
+        }
+      ],
+      replace: [
+        {
+          old: "github.com/old/pkg",
+          new: "github.com/new/pkg",
+          version: "v2.0.0"
+        }
+      ]
+    }
+  }
+});
+```
+
+### 4. Java
+
+But seriously, don't write Java in 2025.
+
+#### check_maven_versions
+
+Check latest stable versions for Java packages from pom.xml.
+
+```typescript
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_maven_versions",
+  arguments: {
+    dependencies: [
+      {
+        groupId: "org.springframework.boot",
+        artifactId: "spring-boot-starter-web",
+        version: "2.7.0",
+        scope: "compile"
+      }
+    ]
+  }
+});
+```
+
+#### check_gradle_versions
+
+Check latest stable versions for Java packages from build.gradle.
+
+```typescript
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_gradle_versions",
+  arguments: {
+    dependencies: [
+      {
+        configuration: "implementation",
+        group: "com.google.guava",
+        name: "guava",
+        version: "31.0-jre"
+      }
+    ]
+  }
+});
+```
+
+### 5. check_package_versions
 
 Bulk check latest stable versions for multiple packages from npm and PyPI.
 
@@ -85,6 +200,16 @@ use_mcp_tool({
 ## Guidelines for LLMs
 
 When writing code that includes package dependencies, LLMs should:
+
+0. **Choose the Right Tool for the Job**
+   - Use language-specific tools for detailed dependency management:
+     - `check_npm_versions` for package.json
+     - `check_python_versions` for requirements.txt
+     - `check_pyproject_versions` for pyproject.toml
+     - `check_maven_versions` for pom.xml
+     - `check_gradle_versions` for build.gradle
+     - `check_go_versions` for go.mod
+   - Use `check_package_versions` for quick bulk checks across npm and PyPI
 
 1. **Always Check Versions Before Writing**
    - Before writing a package.json or requirements.txt file, use the appropriate tool to check latest versions
@@ -143,36 +268,152 @@ When writing code that includes package dependencies, LLMs should:
    - Consider falling back to known stable versions if checks fail
    - Warn users about any packages that couldn't be verified
 
-## Example Integration
+## Example Integrations
 
-Here's how an LLM should approach creating a new Node.js project:
+Here's how an LLM should approach creating new projects with different package managers:
+
+### Node.js Project
 
 ```typescript
-// 1. First check all needed package versions
+// 1. Check npm package versions
 const versions = await use_mcp_tool({
   server_name: "package-version",
-  tool_name: "check_package_versions",
+  tool_name: "check_npm_versions",
   arguments: {
-    packages: [
-      { name: "express", registry: "npm" },
-      { name: "typescript", registry: "npm" },
-      { name: "ts-node", registry: "npm" }
-    ]
+    dependencies: {
+      "express": "^4.17.1",
+      "typescript": "~4.5.0"
+    }
   }
 });
 
-// 2. Use the versions when writing package.json
+// 2. Use the versions in package.json
 write_to_file({
+
   path: "package.json",
   content: {
     "name": "my-project",
     "version": "1.0.0",
     "dependencies": {
       "express": `^${versions.find(p => p.name === 'express').latestVersion}`,
-      "typescript": `^${versions.find(p => p.name === 'typescript').latestVersion}`,
-      "ts-node": `^${versions.find(p => p.name === 'ts-node').latestVersion}`
+      "typescript": `^${versions.find(p => p.name === 'typescript').latestVersion}`
     }
   }
+});
+```
+
+### Python Project with pyproject.toml
+
+```typescript
+// 1. Check Python package versions
+const versions = await use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_pyproject_versions",
+  arguments: {
+    dependencies: {
+      dependencies: {
+        "requests": "^2.28.0",
+        "pandas": ">=1.5.0"
+      },
+      "dev-dependencies": {
+        "pytest": ">=7.0.0"
+      }
+    }
+  }
+});
+
+// 2. Use the versions in pyproject.toml
+write_to_file({
+  path: "pyproject.toml",
+  content: `
+[project]
+name = "my-project"
+version = "1.0.0"
+dependencies = [
+    "requests>=${versions.find(p => p.name === 'requests').latestVersion}",
+    "pandas>=${versions.find(p => p.name === 'pandas').latestVersion}"
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=${versions.find(p => p.name === 'pytest (dev)').latestVersion}"
+]
+`
+});
+```
+
+### Go Project
+
+```typescript
+// 1. Check Go package versions
+const versions = await use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_go_versions",
+  arguments: {
+    dependencies: {
+      module: "example.com/mymodule",
+      require: [
+        {
+          path: "github.com/gin-gonic/gin",
+          version: "v1.7.0"
+        }
+      ]
+    }
+  }
+});
+
+// 2. Use the versions in go.mod
+write_to_file({
+  path: "go.mod",
+  content: `
+module example.com/mymodule
+
+go 1.21
+
+require (
+    github.com/gin-gonic/gin ${versions.find(p => p.name === 'github.com/gin-gonic/gin').latestVersion}
+)
+`
+});
+```
+
+### Java Project with Maven
+
+```typescript
+// 1. Check Maven package versions
+const versions = await use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_maven_versions",
+  arguments: {
+    dependencies: [
+      {
+        groupId: "org.springframework.boot",
+        artifactId: "spring-boot-starter-web",
+        version: "2.7.0"
+      }
+    ]
+  }
+});
+
+// 2. Use the versions in pom.xml
+write_to_file({
+  path: "pom.xml",
+  content: `
+<project>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.example</groupId>
+    <artifactId>my-project</artifactId>
+    <version>1.0.0</version>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <version>${versions.find(p => p.name === 'org.springframework.boot:spring-boot-starter-web').latestVersion}</version>
+        </dependency>
+    </dependencies>
+</project>
+`
 });
 ```
 
@@ -185,21 +426,9 @@ This ensures that new projects always start with the latest stable versions of p
 ```plaintext
 When writing code that includes package dependencies, you must:
 
-1. Before writing any package.json or requirements.txt file, check latest stable versions using the package-version MCP server:
+1. Before writing any dependency files, check latest stable versions using the package-version MCP server:
 
-// For multiple packages (preferred method):
-use_mcp_tool({
-  server_name: "package-version",
-  tool_name: "check_package_versions",
-  arguments: {
-    packages: [
-      { name: "package-name", registry: "npm" },  // for npm packages
-      { name: "package-name", registry: "pypi" }  // for python packages
-    ]
-  }
-});
-
-// For package.json only:
+// For Node.js (package.json):
 use_mcp_tool({
   server_name: "package-version",
   tool_name: "check_npm_versions",
@@ -210,7 +439,7 @@ use_mcp_tool({
   }
 });
 
-// For requirements.txt only:
+// For Python (requirements.txt):
 use_mcp_tool({
   server_name: "package-version",
   tool_name: "check_python_versions",
@@ -221,18 +450,86 @@ use_mcp_tool({
   }
 });
 
+// For Python (pyproject.toml):
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_pyproject_versions",
+  arguments: {
+    dependencies: {
+      dependencies: {
+        "package-name": "version"
+      }
+    }
+  }
+});
+
+// For Java Maven (pom.xml):
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_maven_versions",
+  arguments: {
+    dependencies: [
+      {
+        groupId: "group",
+        artifactId: "artifact",
+        version: "version"
+      }
+    ]
+  }
+});
+
+// For Java Gradle (build.gradle):
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_gradle_versions",
+  arguments: {
+    dependencies: [
+      {
+        configuration: "implementation",
+        group: "group",
+        name: "name",
+        version: "version"
+      }
+    ]
+  }
+});
+
+// For Go (go.mod):
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_go_versions",
+  arguments: {
+    dependencies: {
+      module: "module-name",
+      require: [
+        {
+          path: "package-path",
+          version: "version"
+        }
+      ]
+    }
+  }
+});
+
 2. Use the returned latest versions in your dependency files:
    - For applications: Use exact versions
-   - For libraries: Use compatible ranges (^ for npm, >= for Python)
+   - For libraries: Use compatible ranges
+     - npm: ^ for minor updates, ~ for patch updates
+     - Python: >= for compatible versions, == for exact versions
+     - Java: Use the version directly (Maven/Gradle handle ranges differently)
+     - Go: Use semantic version prefixes (e.g., v1.2.3)
    - Document any version-specific requirements in comments
 
-3. If version checks fail, note it in comments and use known stable versions
+3. If version checks fail:
+   - Document it in comments
+   - Use known stable versions as fallback
+   - Consider project requirements and compatibility
 ```
 
 Example system prompt for users:
 
 ```plaintext
-When writing code that includes dependencies, you must check latest stable versions using the package-version MCP server before writing package.json or requirements.txt files. Use exact versions for applications and compatible ranges for libraries. Document any version-specific requirements or failed checks in comments.
+When writing code that includes dependencies, you must check latest stable versions using the package-version MCP server before writing any dependency files (package.json, requirements.txt, pyproject.toml, pom.xml, build.gradle, go.mod). Use exact versions for applications and appropriate version ranges for libraries based on the package manager's conventions. Document any version-specific requirements or failed checks in comments.
 ```
 
 ## Building and Running
@@ -253,7 +550,12 @@ When writing code that includes dependencies, you must check latest stable versi
    - Use `npm run watch` for development to automatically rebuild on changes
    - Use `npm run build` for production builds
 
-No environment variables are required as this server uses public npm and PyPI registries.
+No environment variables are required as this server uses public registries:
+
+- npm registry (registry.npmjs.org)
+- PyPI (pypi.org)
+- Go Proxy (proxy.golang.org)
+- Maven Central (search.maven.org)
 
 ## License
 
