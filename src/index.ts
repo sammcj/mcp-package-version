@@ -17,6 +17,12 @@ interface PackageVersion {
   registry: 'npm' | 'pypi'
 }
 
+interface PyProjectDependencies {
+  dependencies?: { [key: string]: string }
+  'optional-dependencies'?: { [key: string]: { [key: string]: string } }
+  'dev-dependencies'?: { [key: string]: string }
+}
+
 class PackageVersionServer {
   private server: Server
   private npmRegistry = 'https://registry.npmjs.org';
@@ -47,6 +53,46 @@ class PackageVersionServer {
   private setupToolHandlers() {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: [
+        {
+          name: 'check_pyproject_versions',
+          description: 'Check latest stable versions for Python packages in pyproject.toml',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              dependencies: {
+                type: 'object',
+                properties: {
+                  dependencies: {
+                    type: 'object',
+                    additionalProperties: {
+                      type: 'string',
+                    },
+                    description: 'Project dependencies from pyproject.toml',
+                  },
+                  'optional-dependencies': {
+                    type: 'object',
+                    additionalProperties: {
+                      type: 'object',
+                      additionalProperties: {
+                        type: 'string',
+                      },
+                    },
+                    description: 'Optional dependencies from pyproject.toml',
+                  },
+                  'dev-dependencies': {
+                    type: 'object',
+                    additionalProperties: {
+                      type: 'string',
+                    },
+                    description: 'Development dependencies from pyproject.toml',
+                  },
+                },
+                description: 'Dependencies object from pyproject.toml',
+              },
+            },
+            required: ['dependencies'],
+          },
+        },
         {
           name: 'check_npm_versions',
           description: 'Check latest stable versions for npm packages',
@@ -119,6 +165,8 @@ class PackageVersionServer {
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       switch (request.params.name) {
+        case 'check_pyproject_versions':
+          return this.handlePyProjectVersionCheck(request.params.arguments)
         case 'check_npm_versions':
           return this.handleNpmVersionCheck(request.params.arguments)
         case 'check_python_versions':
@@ -222,6 +270,67 @@ class PackageVersionServer {
         results.push(result)
       } catch (error) {
         console.error(`Error checking npm package ${name}:`, error)
+      }
+    }
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(results, null, 2),
+        },
+      ],
+    }
+  }
+
+  private async handlePyProjectVersionCheck(args: any) {
+    if (!args.dependencies || typeof args.dependencies !== 'object') {
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        'Invalid dependencies object from pyproject.toml'
+      )
+    }
+
+    const results: PackageVersion[] = []
+    const dependencies = args.dependencies as PyProjectDependencies
+
+    // Process main dependencies
+    if (dependencies.dependencies) {
+      for (const [name, version] of Object.entries(dependencies.dependencies)) {
+        try {
+          const result = await this.getPyPiPackageVersion(name, version)
+          results.push(result)
+        } catch (error) {
+          console.error(`Error checking PyPI package ${name}:`, error)
+        }
+      }
+    }
+
+    // Process optional dependencies
+    if (dependencies['optional-dependencies']) {
+      for (const [group, deps] of Object.entries(dependencies['optional-dependencies'])) {
+        for (const [name, version] of Object.entries(deps)) {
+          try {
+            const result = await this.getPyPiPackageVersion(name, version)
+            result.name = `${name} (optional: ${group})`
+            results.push(result)
+          } catch (error) {
+            console.error(`Error checking PyPI package ${name}:`, error)
+          }
+        }
+      }
+    }
+
+    // Process dev dependencies
+    if (dependencies['dev-dependencies']) {
+      for (const [name, version] of Object.entries(dependencies['dev-dependencies'])) {
+        try {
+          const result = await this.getPyPiPackageVersion(name, version)
+          result.name = `${name} (dev)`
+          results.push(result)
+        } catch (error) {
+          console.error(`Error checking PyPI package ${name}:`, error)
+        }
       }
     }
 
