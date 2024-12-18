@@ -532,7 +532,7 @@ Example system prompt for users:
 When writing code that includes dependencies, you must check latest stable versions using the package-version MCP server before writing any dependency files (package.json, requirements.txt, pyproject.toml, pom.xml, build.gradle, go.mod). Use exact versions for applications and appropriate version ranges for libraries based on the package manager's conventions. Document any version-specific requirements or failed checks in comments.
 ```
 
-## Building and Running
+## Development
 
 1. **Clone and Install Dependencies**
    ```bash
@@ -546,9 +546,37 @@ When writing code that includes dependencies, you must check latest stable versi
    npm run build
    ```
 
-3. **Development**
+3. **Development Workflow**
    - Use `npm run watch` for development to automatically rebuild on changes
    - Use `npm run build` for production builds
+
+4. **Release Process**
+   ```bash
+   # 1. Make your changes
+   vim src/your-file.ts
+
+   # 2. Commit your changes
+   git add .
+   git commit -m "feat: your new feature"
+
+   # 3. Run bump command (this will):
+   # - Update version in package.json
+   # - Update CHANGELOG.md
+   # - Commit changes
+   # - Push to GitHub
+   npm run bump
+
+   # GitHub Actions will then:
+   # - Create a git tag
+   # - Create a GitHub release
+   # - Publish to npm (when triggered manually)
+   ```
+
+5. **Manual npm Publishing**
+   ```bash
+   # To trigger a manual npm publish
+   gh workflow run publish.yml
+   ```
 
 No environment variables are required as this server uses public registries:
 

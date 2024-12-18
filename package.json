@@ -1,6 +1,6 @@
 {
   "name": "mcp-package-version",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "An MCP server to provide LLMs the latest (stable) version of packages in package.json and requirements.txt files",
   "author": {
     "name": "Sam McLeod",
@@ -35,7 +35,7 @@
     "prepare": "npm run build",
     "watch": "tsc --watch",
     "inspector": "npx @modelcontextprotocol/inspector build/index.js",
-    "bump": "npx -y standard-version --skip.tag --skip.commit"
+    "bump": "npx -y standard-version --skip.tag && git add . && git commit -m 'chore: bump version' && git push"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.0.4",
