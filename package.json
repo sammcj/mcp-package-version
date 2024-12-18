@@ -25,7 +25,7 @@
   },
   "type": "module",
   "bin": {
-    "package-version": "build/index.js"
+    "mcp-package-version": "build/index.js"
   },
   "files": [
     "build"
