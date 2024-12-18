@@ -38,7 +38,7 @@
     "bump": "npx -y standard-version && git push --follow-tags origin main && npm publish"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.0.3",
+    "@modelcontextprotocol/sdk": "1.0.4",
     "axios": "1.7.9",
     "semver": "7.6.3"
   },
