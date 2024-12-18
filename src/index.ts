@@ -7,41 +7,25 @@ import {
   ListToolsRequestSchema,
   McpError,
 } from '@modelcontextprotocol/sdk/types.js'
-import axios from 'axios'
-// import * as semver from 'semver';
 
-interface PackageVersion {
-  name: string
-  currentVersion?: string
-  latestVersion: string
-  registry: 'npm' | 'pypi' | 'maven'
-}
-
-interface PyProjectDependencies {
-  dependencies?: { [key: string]: string }
-  'optional-dependencies'?: { [key: string]: { [key: string]: string } }
-  'dev-dependencies'?: { [key: string]: string }
-}
-
-interface MavenDependency {
-  groupId: string
-  artifactId: string
-  version?: string
-  scope?: string
-}
-
-interface GradleDependency {
-  configuration: string
-  group: string
-  name: string
-  version?: string
-}
+import {
+  NpmDependencies,
+  PyProjectDependencies,
+  MavenDependency,
+  GradleDependency,
+  GoModule,
+} from './types/index.js'
+import { NpmHandler } from './handlers/npm.js'
+import { PythonHandler } from './handlers/python.js'
+import { JavaHandler } from './handlers/java.js'
+import { GoHandler } from './handlers/go.js'
 
 class PackageVersionServer {
   private server: Server
-  private npmRegistry = 'https://registry.npmjs.org';
-  private pypiRegistry = 'https://pypi.org/pypi';
-  private mavenRegistry = 'https://search.maven.org/solrsearch/select';
+  private npmHandler: NpmHandler
+  private pythonHandler: PythonHandler
+  private javaHandler: JavaHandler
+  private goHandler: GoHandler
 
   constructor() {
     this.server = new Server(
@@ -56,6 +40,11 @@ class PackageVersionServer {
       }
     )
 
+    this.npmHandler = new NpmHandler()
+    this.pythonHandler = new PythonHandler()
+    this.javaHandler = new JavaHandler()
+    this.goHandler = new GoHandler()
+
     this.setupToolHandlers()
 
     this.server.onerror = (error) => console.error('[MCP Error]', error)
@@ -68,6 +57,80 @@ class PackageVersionServer {
   private setupToolHandlers() {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: [
+        {
+          name: 'check_npm_versions',
+          description: 'Check latest stable versions for npm packages',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              dependencies: {
+                type: 'object',
+                additionalProperties: {
+                  type: 'string',
+                },
+                description: 'Dependencies object from package.json',
+              },
+            },
+            required: ['dependencies'],
+          },
+        },
+        {
+          name: 'check_python_versions',
+          description: 'Check latest stable versions for Python packages',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              requirements: {
+                type: 'array',
+                items: {
+                  type: 'string',
+                },
+                description: 'Array of requirements from requirements.txt',
+              },
+            },
+            required: ['requirements'],
+          },
+        },
+        {
+          name: 'check_pyproject_versions',
+          description: 'Check latest stable versions for Python packages in pyproject.toml',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              dependencies: {
+                type: 'object',
+                properties: {
+                  dependencies: {
+                    type: 'object',
+                    additionalProperties: {
+                      type: 'string',
+                    },
+                    description: 'Project dependencies from pyproject.toml',
+                  },
+                  'optional-dependencies': {
+                    type: 'object',
+                    additionalProperties: {
+                      type: 'object',
+                      additionalProperties: {
+                        type: 'string',
+                      },
+                    },
+                    description: 'Optional dependencies from pyproject.toml',
+                  },
+                  'dev-dependencies': {
+                    type: 'object',
+                    additionalProperties: {
+                      type: 'string',
+                    },
+                    description: 'Development dependencies from pyproject.toml',
+                  },
+                },
+                description: 'Dependencies object from pyproject.toml',
+              },
+            },
+            required: ['dependencies'],
+          },
+        },
         {
           name: 'check_maven_versions',
           description: 'Check latest stable versions for Java packages in pom.xml',
@@ -141,129 +204,90 @@ class PackageVersionServer {
           },
         },
         {
-          name: 'check_pyproject_versions',
-          description: 'Check latest stable versions for Python packages in pyproject.toml',
+          name: 'check_go_versions',
+          description: 'Check latest stable versions for Go packages in go.mod',
           inputSchema: {
             type: 'object',
             properties: {
               dependencies: {
                 type: 'object',
                 properties: {
-                  dependencies: {
-                    type: 'object',
-                    additionalProperties: {
-                      type: 'string',
-                    },
-                    description: 'Project dependencies from pyproject.toml',
+                  module: {
+                    type: 'string',
+                    description: 'Module name',
                   },
-                  'optional-dependencies': {
-                    type: 'object',
-                    additionalProperties: {
+                  require: {
+                    type: 'array',
+                    items: {
                       type: 'object',
-                      additionalProperties: {
-                        type: 'string',
+                      properties: {
+                        path: {
+                          type: 'string',
+                          description: 'Package import path',
+                        },
+                        version: {
+                          type: 'string',
+                          description: 'Current version',
+                        },
                       },
+                      required: ['path'],
                     },
-                    description: 'Optional dependencies from pyproject.toml',
+                    description: 'Required dependencies',
                   },
-                  'dev-dependencies': {
-                    type: 'object',
-                    additionalProperties: {
-                      type: 'string',
+                  replace: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        old: {
+                          type: 'string',
+                          description: 'Original package path',
+                        },
+                        new: {
+                          type: 'string',
+                          description: 'Replacement package path',
+                        },
+                        version: {
+                          type: 'string',
+                          description: 'Current version',
+                        },
+                      },
+                      required: ['old', 'new'],
                     },
-                    description: 'Development dependencies from pyproject.toml',
+                    description: 'Replacement dependencies',
                   },
                 },
-                description: 'Dependencies object from pyproject.toml',
+                required: ['module'],
+                description: 'Dependencies from go.mod',
               },
             },
             required: ['dependencies'],
-          },
-        },
-        {
-          name: 'check_npm_versions',
-          description: 'Check latest stable versions for npm packages',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              dependencies: {
-                type: 'object',
-                additionalProperties: {
-                  type: 'string',
-                },
-                description: 'Dependencies object from package.json',
-              },
-            },
-            required: ['dependencies'],
-          },
-        },
-        {
-          name: 'check_python_versions',
-          description: 'Check latest stable versions for Python packages',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              requirements: {
-                type: 'array',
-                items: {
-                  type: 'string',
-                },
-                description: 'Array of requirements from requirements.txt',
-              },
-            },
-            required: ['requirements'],
-          },
-        },
-        {
-          name: 'check_package_versions',
-          description: 'Bulk check latest stable versions for npm and Python packages',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              packages: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    name: {
-                      type: 'string',
-                      description: 'Package name',
-                    },
-                    registry: {
-                      type: 'string',
-                      enum: ['npm', 'pypi'],
-                      description: 'Package registry (npm or pypi)',
-                    },
-                    currentVersion: {
-                      type: 'string',
-                      description: 'Current version (optional)',
-                    },
-                  },
-                  required: ['name', 'registry'],
-                },
-                description: 'Array of packages to check',
-              },
-            },
-            required: ['packages'],
           },
         },
       ],
     }))
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      if (!request.params.arguments) {
+        throw new McpError(
+          ErrorCode.InvalidParams,
+          'Missing arguments'
+        )
+      }
+
       switch (request.params.name) {
-        case 'check_maven_versions':
-          return this.handleMavenVersionCheck(request.params.arguments)
-        case 'check_gradle_versions':
-          return this.handleGradleVersionCheck(request.params.arguments)
-        case 'check_pyproject_versions':
-          return this.handlePyProjectVersionCheck(request.params.arguments)
         case 'check_npm_versions':
-          return this.handleNpmVersionCheck(request.params.arguments)
+          return this.npmHandler.getLatestVersion(request.params.arguments as { dependencies: NpmDependencies })
         case 'check_python_versions':
-          return this.handlePythonVersionCheck(request.params.arguments)
-        case 'check_package_versions':
-          return this.handleBulkVersionCheck(request.params.arguments)
+          return this.pythonHandler.getLatestVersionFromRequirements(request.params.arguments as { requirements: string[] })
+        case 'check_pyproject_versions':
+          return this.pythonHandler.getLatestVersion(request.params.arguments as { dependencies: PyProjectDependencies })
+        case 'check_maven_versions':
+          return this.javaHandler.getLatestVersionFromMaven(request.params.arguments as { dependencies: MavenDependency[] })
+        case 'check_gradle_versions':
+          return this.javaHandler.getLatestVersion(request.params.arguments as { dependencies: GradleDependency[] })
+        case 'check_go_versions':
+          return this.goHandler.getLatestVersion(request.params.arguments as { dependencies: GoModule })
         default:
           throw new McpError(
             ErrorCode.MethodNotFound,
@@ -271,352 +295,6 @@ class PackageVersionServer {
           )
       }
     })
-  }
-
-  private async getNpmPackageVersion(
-    packageName: string,
-    currentVersion?: string
-  ): Promise<PackageVersion> {
-    try {
-      const response = await axios.get(
-        `${this.npmRegistry}/${encodeURIComponent(packageName)}`
-      )
-
-      const latestVersion = response.data['dist-tags']?.latest
-      if (!latestVersion) {
-        throw new Error('Latest version not found')
-      }
-
-      const result: PackageVersion = {
-        name: packageName,
-        latestVersion,
-        registry: 'npm',
-      }
-
-      if (currentVersion) {
-        // Remove any leading ^ or ~ from the current version
-        const cleanCurrentVersion = currentVersion.replace(/^[\^~]/, '')
-        result.currentVersion = cleanCurrentVersion
-      }
-
-      return result
-    } catch (error) {
-      console.error(`Error fetching npm package ${packageName}:`, error)
-      throw new McpError(
-        ErrorCode.InternalError,
-        `Failed to fetch npm package ${packageName}`
-      )
-    }
-  }
-
-  private async getMavenPackageVersion(
-    groupId: string,
-    artifactId: string,
-    currentVersion?: string,
-    scope?: string
-  ): Promise<PackageVersion> {
-    try {
-      const query = `g:"${groupId}" AND a:"${artifactId}"`
-      const response = await axios.get(this.mavenRegistry, {
-        params: {
-          q: query,
-          core: 'gav',
-          rows: 1,
-          wt: 'json',
-        },
-      })
-
-      const doc = response.data?.response?.docs?.[0]
-      if (!doc?.latestVersion) {
-        throw new Error('Latest version not found')
-      }
-
-      const name = scope
-        ? `${groupId}:${artifactId} (${scope})`
-        : `${groupId}:${artifactId}`
-
-      const result: PackageVersion = {
-        name,
-        latestVersion: doc.latestVersion,
-        registry: 'maven',
-      }
-
-      if (currentVersion) {
-        result.currentVersion = currentVersion
-      }
-
-      return result
-    } catch (error) {
-      console.error(`Error fetching Maven package ${groupId}:${artifactId}:`, error)
-      throw new McpError(
-        ErrorCode.InternalError,
-        `Failed to fetch Maven package ${groupId}:${artifactId}`
-      )
-    }
-  }
-
-  private async handleMavenVersionCheck(args: any) {
-    if (!args.dependencies || !Array.isArray(args.dependencies)) {
-      throw new McpError(
-        ErrorCode.InvalidParams,
-        'Invalid Maven dependencies array'
-      )
-    }
-
-    const results: PackageVersion[] = []
-    for (const dep of args.dependencies) {
-      if (!dep.groupId || !dep.artifactId) continue
-
-      try {
-        const result = await this.getMavenPackageVersion(
-          dep.groupId,
-          dep.artifactId,
-          dep.version,
-          dep.scope
-        )
-        results.push(result)
-      } catch (error) {
-        console.error(`Error checking Maven package ${dep.groupId}:${dep.artifactId}:`, error)
-      }
-    }
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(results, null, 2),
-        },
-      ],
-    }
-  }
-
-  private async handleGradleVersionCheck(args: any) {
-    if (!args.dependencies || !Array.isArray(args.dependencies)) {
-      throw new McpError(
-        ErrorCode.InvalidParams,
-        'Invalid Gradle dependencies array'
-      )
-    }
-
-    const results: PackageVersion[] = []
-    for (const dep of args.dependencies) {
-      if (!dep.group || !dep.name || !dep.configuration) continue
-
-      try {
-        const result = await this.getMavenPackageVersion(
-          dep.group,
-          dep.name,
-          dep.version,
-          dep.configuration
-        )
-        results.push(result)
-      } catch (error) {
-        console.error(`Error checking Gradle package ${dep.group}:${dep.name}:`, error)
-      }
-    }
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(results, null, 2),
-        },
-      ],
-    }
-  }
-
-  private async getPyPiPackageVersion(
-    packageName: string,
-    currentVersion?: string
-  ): Promise<PackageVersion> {
-    try {
-      const response = await axios.get(
-        `${this.pypiRegistry}/${encodeURIComponent(packageName)}/json`
-      )
-
-      const latestVersion = response.data.info.version
-      if (!latestVersion) {
-        throw new Error('Latest version not found')
-      }
-
-      const result: PackageVersion = {
-        name: packageName,
-        latestVersion,
-        registry: 'pypi',
-      }
-
-      if (currentVersion) {
-        // Remove any comparison operators from the current version
-        const cleanCurrentVersion = currentVersion.replace(/^[=<>~!]+/, '')
-        result.currentVersion = cleanCurrentVersion
-      }
-
-      return result
-    } catch (error) {
-      console.error(`Error fetching PyPI package ${packageName}:`, error)
-      throw new McpError(
-        ErrorCode.InternalError,
-        `Failed to fetch PyPI package ${packageName}`
-      )
-    }
-  }
-
-  private async handleNpmVersionCheck(args: any) {
-    if (!args.dependencies || typeof args.dependencies !== 'object') {
-      throw new McpError(
-        ErrorCode.InvalidParams,
-        'Invalid dependencies object'
-      )
-    }
-
-    const results: PackageVersion[] = []
-    for (const [name, version] of Object.entries(args.dependencies)) {
-      if (typeof version !== 'string') continue
-      try {
-        const result = await this.getNpmPackageVersion(name, version)
-        results.push(result)
-      } catch (error) {
-        console.error(`Error checking npm package ${name}:`, error)
-      }
-    }
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(results, null, 2),
-        },
-      ],
-    }
-  }
-
-  private async handlePyProjectVersionCheck(args: any) {
-    if (!args.dependencies || typeof args.dependencies !== 'object') {
-      throw new McpError(
-        ErrorCode.InvalidParams,
-        'Invalid dependencies object from pyproject.toml'
-      )
-    }
-
-    const results: PackageVersion[] = []
-    const dependencies = args.dependencies as PyProjectDependencies
-
-    // Process main dependencies
-    if (dependencies.dependencies) {
-      for (const [name, version] of Object.entries(dependencies.dependencies)) {
-        try {
-          const result = await this.getPyPiPackageVersion(name, version)
-          results.push(result)
-        } catch (error) {
-          console.error(`Error checking PyPI package ${name}:`, error)
-        }
-      }
-    }
-
-    // Process optional dependencies
-    if (dependencies['optional-dependencies']) {
-      for (const [group, deps] of Object.entries(dependencies['optional-dependencies'])) {
-        for (const [name, version] of Object.entries(deps)) {
-          try {
-            const result = await this.getPyPiPackageVersion(name, version)
-            result.name = `${name} (optional: ${group})`
-            results.push(result)
-          } catch (error) {
-            console.error(`Error checking PyPI package ${name}:`, error)
-          }
-        }
-      }
-    }
-
-    // Process dev dependencies
-    if (dependencies['dev-dependencies']) {
-      for (const [name, version] of Object.entries(dependencies['dev-dependencies'])) {
-        try {
-          const result = await this.getPyPiPackageVersion(name, version)
-          result.name = `${name} (dev)`
-          results.push(result)
-        } catch (error) {
-          console.error(`Error checking PyPI package ${name}:`, error)
-        }
-      }
-    }
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(results, null, 2),
-        },
-      ],
-    }
-  }
-
-  private async handlePythonVersionCheck(args: any) {
-    if (!args.requirements || !Array.isArray(args.requirements)) {
-      throw new McpError(
-        ErrorCode.InvalidParams,
-        'Invalid requirements array'
-      )
-    }
-
-    const results: PackageVersion[] = []
-    for (const requirement of args.requirements) {
-      if (typeof requirement !== 'string') continue
-
-      // Parse package name and version from requirement string
-      const match = requirement.match(/^([a-zA-Z0-9-_.]+)([=<>~!]+.*)?$/)
-      if (!match) continue
-
-      const [, name, version = '0.0.0'] = match
-
-      try {
-        const result = await this.getPyPiPackageVersion(name, version)
-        results.push(result)
-      } catch (error) {
-        console.error(`Error checking PyPI package ${name}:`, error)
-      }
-    }
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(results, null, 2),
-        },
-      ],
-    }
-  }
-
-  private async handleBulkVersionCheck(args: any) {
-    if (!args.packages || !Array.isArray(args.packages)) {
-      throw new McpError(
-        ErrorCode.InvalidParams,
-        'Invalid packages array'
-      )
-    }
-
-    const results: PackageVersion[] = []
-    for (const pkg of args.packages) {
-      if (!pkg || typeof pkg !== 'object' || !pkg.name || !pkg.registry) continue
-
-      try {
-        const result = pkg.registry === 'npm'
-          ? await this.getNpmPackageVersion(pkg.name, pkg.currentVersion)
-          : await this.getPyPiPackageVersion(pkg.name, pkg.currentVersion)
-        results.push(result)
-      } catch (error) {
-        console.error(`Error checking package ${pkg.name}:`, error)
-      }
-    }
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(results, null, 2),
-        },
-      ],
-    }
   }
 
   async run() {
