@@ -9,6 +9,8 @@ An MCP server that provides tools for checking latest stable package versions fr
 
 This server helps LLMs ensure they're recommending up-to-date package versions when writing code.
 
+<a href="https://glama.ai/mcp/servers/zkts2w92ba"><img width="380" height="200" src="https://glama.ai/mcp/servers/zkts2w92ba/badge" alt="https://github.com/sammcj/mcp-package-version MCP server" /></a>
+
 ## Screenshot
 
 ![tooling with and without mcp-package-version](images/with-without.jpg)
