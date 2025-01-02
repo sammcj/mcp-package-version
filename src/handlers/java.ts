@@ -23,7 +23,7 @@ export class JavaHandler implements PackageHandler {
       })
 
       const doc = response.data?.response?.docs?.[0]
-      if (!doc?.latestVersion) {
+      if (!doc?.v) {
         throw new Error('Latest version not found')
       }
 
@@ -33,7 +33,7 @@ export class JavaHandler implements PackageHandler {
 
       const result: PackageVersion = {
         name,
-        latestVersion: doc.latestVersion,
+        latestVersion: doc.v,
         registry: 'maven',
       }
 
