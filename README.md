@@ -42,6 +42,21 @@ Add the following to your MCP settings file:
 }
 ```
 
+If you are behind a corporate proxy which MITMs your traffic, you may need to additionally specify the proxy CA cert bundle:
+```json
+{
+  "mcpServers": {
+    "package-version": {
+      "command": "npx",
+      "args": ["-y", "mcp-package-version"],
+      "env": {
+        "NODE_EXTRA_CA_CERTS": "/path/to/mitm/cert.pem"
+      }
+    }
+  }
+}
+```
+
 - For the Cline VSCode Extension this will be `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
 - For Claude Desktop `~/Library/Application\ Support/Claude/claude_desktop_config.json`
 - For GoMCP `~/.config/gomcp/config.yaml`
