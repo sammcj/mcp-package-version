@@ -38,12 +38,12 @@
     "bump": "npx -y standard-version --skip.tag && git add . ; git commit -m 'chore: bump version' ; git push"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.0.4",
+    "@modelcontextprotocol/sdk": "1.1.1",
     "axios": "1.7.9",
     "semver": "7.6.3"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.3"
   }
 }
