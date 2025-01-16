@@ -1,5 +1,7 @@
 # Package Version MCP Server
 
+[![smithery badge](https://smithery.ai/badge/mcp-package-version)](https://smithery.ai/server/mcp-package-version)
+
 An MCP server that provides tools for checking latest stable package versions from multiple package registries:
 
 - npm (Node.js/JavaScript)
@@ -16,6 +18,14 @@ This server helps LLMs ensure they're recommending up-to-date package versions w
 ![tooling with and without mcp-package-version](images/with-without.jpg)
 
 ## Running
+
+### Installing via Smithery
+
+To install Package Version for Claude Desktop automatically via [Smithery](https://smithery.ai/server/mcp-package-version):
+
+```bash
+npx -y @smithery/cli install mcp-package-version --client claude
+```
 
 **Configure MCP Settings**
 
