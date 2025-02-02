@@ -473,7 +473,7 @@ use_mcp_tool({
   arguments: {
     requirements: [
       "package-name==version"
-    ]
+    }
   }
 });
 
