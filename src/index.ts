@@ -14,6 +14,7 @@ import {
   MavenDependency,
   GradleDependency,
   GoModule,
+  VersionConstraints,
 } from './types/index.js'
 import { NpmHandler } from './handlers/npm.js'
 import { PythonHandler } from './handlers/python.js'
@@ -69,6 +70,23 @@ class PackageVersionServer {
                   type: 'string',
                 },
                 description: 'Dependencies object from package.json',
+              },
+              constraints: {
+                type: 'object',
+                additionalProperties: {
+                  type: 'object',
+                  properties: {
+                    majorVersion: {
+                      type: 'number',
+                      description: 'Limit updates to this major version',
+                    },
+                    excludePackage: {
+                      type: 'boolean',
+                      description: 'Exclude this package from updates',
+                    },
+                  },
+                },
+                description: 'Optional constraints for specific packages',
               },
             },
             required: ['dependencies'],
@@ -277,7 +295,10 @@ class PackageVersionServer {
 
       switch (request.params.name) {
         case 'check_npm_versions':
-          return this.npmHandler.getLatestVersion(request.params.arguments as { dependencies: NpmDependencies })
+          return this.npmHandler.getLatestVersion(request.params.arguments as {
+            dependencies: NpmDependencies,
+            constraints?: VersionConstraints
+          })
         case 'check_python_versions':
           return this.pythonHandler.getLatestVersionFromRequirements(request.params.arguments as { requirements: string[] })
         case 'check_pyproject_versions':

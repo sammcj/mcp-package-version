@@ -3,6 +3,17 @@ export interface PackageVersion {
   currentVersion?: string
   latestVersion: string
   registry: 'npm' | 'pypi' | 'maven' | 'go'
+  skipped?: boolean
+  skipReason?: string
+}
+
+export interface VersionConstraint {
+  majorVersion?: number
+  excludePackage?: boolean
+}
+
+export interface VersionConstraints {
+  [packageName: string]: VersionConstraint
 }
 
 export interface RegistryConfig {
