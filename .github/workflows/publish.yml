@@ -33,6 +33,7 @@ jobs:
 
       - name: Create Git tag
         if: ${{ !contains(github.event.head_commit.message, 'chore(release)') && github.event_name != 'workflow_dispatch' }}
+        continue-on-error: true
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
