@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.14](https://github.com/sammcj/mcp-package-version/compare/v0.1.12...v0.1.14) (2025-03-01)
+
+
+### Features
+
+* add bedrock model lookup support ([32d9001](https://github.com/sammcj/mcp-package-version/commit/32d9001a84e53ccd1265ab28b45cc77a05c253e4))
+
 ### [0.1.13](https://github.com/sammcj/mcp-package-version/compare/v0.1.12...v0.1.13) (2025-03-01)
 
 
