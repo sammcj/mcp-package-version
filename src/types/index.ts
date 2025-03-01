@@ -1,3 +1,5 @@
+export * from './bedrock.js';
+
 export interface PackageVersion {
   name: string
   currentVersion?: string

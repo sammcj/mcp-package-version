@@ -20,6 +20,7 @@ import { NpmHandler } from './handlers/npm.js'
 import { PythonHandler } from './handlers/python.js'
 import { JavaHandler } from './handlers/java.js'
 import { GoHandler } from './handlers/go.js'
+import { BedrockHandler } from './handlers/bedrock.js'
 
 class PackageVersionServer {
   private server: Server
@@ -27,6 +28,7 @@ class PackageVersionServer {
   private pythonHandler: PythonHandler
   private javaHandler: JavaHandler
   private goHandler: GoHandler
+  private bedrockHandler: BedrockHandler
 
   constructor() {
     this.server = new Server(
@@ -45,6 +47,7 @@ class PackageVersionServer {
     this.pythonHandler = new PythonHandler()
     this.javaHandler = new JavaHandler()
     this.goHandler = new GoHandler()
+    this.bedrockHandler = new BedrockHandler()
 
     this.setupToolHandlers()
 
@@ -282,6 +285,45 @@ class PackageVersionServer {
             required: ['dependencies'],
           },
         },
+        {
+          name: 'check_bedrock_models',
+          description: 'Search, list, and get information about Amazon Bedrock models',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              action: {
+                type: 'string',
+                enum: ['list', 'search', 'get'],
+                description: 'Action to perform: list all models, search for models, or get a specific model',
+                default: 'list'
+              },
+              query: {
+                type: 'string',
+                description: 'Search query for model name or ID (used with action: "search")'
+              },
+              provider: {
+                type: 'string',
+                description: 'Filter by provider name (used with action: "search")'
+              },
+              region: {
+                type: 'string',
+                description: 'Filter by AWS region (used with action: "search")'
+              },
+              modelId: {
+                type: 'string',
+                description: 'Model ID to retrieve (used with action: "get")'
+              }
+            }
+          }
+        },
+        {
+          name: 'get_latest_bedrock_model',
+          description: 'Get the latest Claude Sonnet model from Amazon Bedrock (best for coding tasks)',
+          inputSchema: {
+            type: 'object',
+            properties: {}
+          }
+        },
       ],
     }))
 
@@ -309,6 +351,11 @@ class PackageVersionServer {
           return this.javaHandler.getLatestVersion(request.params.arguments as { dependencies: GradleDependency[] })
         case 'check_go_versions':
           return this.goHandler.getLatestVersion(request.params.arguments as { dependencies: GoModule })
+        case 'check_bedrock_models':
+          return this.bedrockHandler.getLatestVersion(request.params.arguments)
+        case 'get_latest_bedrock_model':
+          // Set the action to get_latest_claude_sonnet to use the specialized method
+          return this.bedrockHandler.getLatestVersion({ action: 'get_latest_claude_sonnet' })
         default:
           throw new McpError(
             ErrorCode.MethodNotFound,

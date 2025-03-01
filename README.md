@@ -8,6 +8,7 @@ An MCP server that provides tools for checking latest stable package versions fr
 - PyPI (Python)
 - Maven Central (Java)
 - Go Proxy (Go)
+- AWS Bedrock (AI Models)
 
 This server helps LLMs ensure they're recommending up-to-date package versions when writing code.
 
@@ -224,6 +225,56 @@ use_mcp_tool({
 });
 ```
 
+### 6. AWS Bedrock
+
+#### check_bedrock_models
+
+Search, list, and get information about Amazon Bedrock AI models.
+
+```typescript
+// List all available Bedrock models
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_bedrock_models",
+  arguments: {
+    action: "list"
+  }
+});
+
+// Search for specific models
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_bedrock_models",
+  arguments: {
+    action: "search",
+    query: "claude",
+    provider: "anthropic"
+  }
+});
+
+// Get a specific model by ID
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_bedrock_models",
+  arguments: {
+    action: "get",
+    modelId: "anthropic.claude-3-sonnet-20240229-v1:0"
+  }
+});
+```
+
+#### get_latest_bedrock_model
+
+Get the latest Claude Sonnet model from Amazon Bedrock (best for coding tasks).
+
+```typescript
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "get_latest_bedrock_model",
+  arguments: {}
+});
+```
+
 ## Guidelines for LLMs
 
 When writing code that includes package dependencies, LLMs should:
@@ -237,6 +288,9 @@ When writing code that includes package dependencies, LLMs should:
      - `check_gradle_versions` for build.gradle
      - `check_go_versions` for go.mod
    - Use `check_package_versions` for quick bulk checks across npm and PyPI
+   - Use AWS Bedrock tools for AI model information:
+     - `check_bedrock_models` to search, list, or get specific model information
+     - `get_latest_bedrock_model` to get the latest Claude Sonnet model (best for coding tasks)
 
 1. **Always Check Versions Before Writing**
    - Before writing a package.json or requirements.txt file, use the appropriate tool to check latest versions
@@ -538,6 +592,24 @@ use_mcp_tool({
   }
 });
 
+// For AWS Bedrock models:
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_bedrock_models",
+  arguments: {
+    action: "search",
+    query: "claude",
+    provider: "anthropic"
+  }
+});
+
+// For getting the latest Claude Sonnet model:
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "get_latest_bedrock_model",
+  arguments: {}
+});
+
 2. Use the returned latest versions in your dependency files:
    - For applications: Use exact versions
    - For libraries: Use compatible ranges
@@ -556,7 +628,7 @@ use_mcp_tool({
 Example system prompt for users:
 
 ```plaintext
-When writing code that includes dependencies, you must check latest stable versions using the package-version MCP server before writing any dependency files (package.json, requirements.txt, pyproject.toml, pom.xml, build.gradle, go.mod). Use exact versions for applications and appropriate version ranges for libraries based on the package manager's conventions. Document any version-specific requirements or failed checks in comments.
+When writing code that includes dependencies, you must check latest stable versions using the package-version MCP server before writing any dependency files (package.json, requirements.txt, pyproject.toml, pom.xml, build.gradle, go.mod). Use exact versions for applications and appropriate version ranges for libraries based on the package manager's conventions. Document any version-specific requirements or failed checks in comments. For AI model information, use the AWS Bedrock tools to search, list, or get specific model details.
 ```
 
 ## Development
@@ -605,12 +677,13 @@ When writing code that includes dependencies, you must check latest stable versi
    gh workflow run publish.yml
    ```
 
-No environment variables are required as this server uses public registries:
+No environment variables are required as this server uses public registries and documentation sites:
 
 - npm registry (registry.npmjs.org)
 - PyPI (pypi.org)
 - Go Proxy (proxy.golang.org)
 - Maven Central (search.maven.org)
+- AWS Bedrock documentation (docs.aws.amazon.com/bedrock)
 
 ## License
 
