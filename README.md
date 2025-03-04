@@ -8,7 +8,7 @@ An MCP server that provides tools for checking latest stable package versions fr
 - PyPI (Python)
 - Maven Central (Java)
 - Go Proxy (Go)
-- AWS Bedrock (AI Models)
+- AWS Bedrock (AI Mdels)
 - Docker Hub (Container Images)
 - GitHub Container Registry (Container Images)
 
