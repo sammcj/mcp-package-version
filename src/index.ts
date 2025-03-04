@@ -15,12 +15,14 @@ import {
   GradleDependency,
   GoModule,
   VersionConstraints,
+  DockerImageQuery,
 } from './types/index.js'
 import { NpmHandler } from './handlers/npm.js'
 import { PythonHandler } from './handlers/python.js'
 import { JavaHandler } from './handlers/java.js'
 import { GoHandler } from './handlers/go.js'
 import { BedrockHandler } from './handlers/bedrock.js'
+import { DockerHandler } from './handlers/docker.js'
 
 class PackageVersionServer {
   private server: Server
@@ -29,6 +31,7 @@ class PackageVersionServer {
   private javaHandler: JavaHandler
   private goHandler: GoHandler
   private bedrockHandler: BedrockHandler
+  private dockerHandler: DockerHandler
 
   constructor() {
     this.server = new Server(
@@ -48,6 +51,7 @@ class PackageVersionServer {
     this.javaHandler = new JavaHandler()
     this.goHandler = new GoHandler()
     this.bedrockHandler = new BedrockHandler()
+    this.dockerHandler = new DockerHandler()
 
     this.setupToolHandlers()
 
@@ -324,6 +328,47 @@ class PackageVersionServer {
             properties: {}
           }
         },
+        {
+          name: 'check_docker_tags',
+          description: 'Check available tags for Docker container images from Docker Hub, GitHub Container Registry, or custom registries',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              image: {
+                type: 'string',
+                description: 'Docker image name (e.g., "nginx", "ubuntu", "ghcr.io/owner/repo")'
+              },
+              registry: {
+                type: 'string',
+                enum: ['dockerhub', 'ghcr', 'custom'],
+                description: 'Registry to check (dockerhub, ghcr, or custom)',
+                default: 'dockerhub'
+              },
+              customRegistry: {
+                type: 'string',
+                description: 'URL for custom registry (required when registry is "custom")'
+              },
+              limit: {
+                type: 'number',
+                description: 'Maximum number of tags to return',
+                default: 10
+              },
+              filterTags: {
+                type: 'array',
+                items: {
+                  type: 'string'
+                },
+                description: 'Array of regex patterns to filter tags'
+              },
+              includeDigest: {
+                type: 'boolean',
+                description: 'Include image digest in results',
+                default: false
+              }
+            },
+            required: ['image']
+          }
+        },
       ],
     }))
 
@@ -356,6 +401,8 @@ class PackageVersionServer {
         case 'get_latest_bedrock_model':
           // Set the action to get_latest_claude_sonnet to use the specialized method
           return this.bedrockHandler.getLatestVersion({ action: 'get_latest_claude_sonnet' })
+        case 'check_docker_tags':
+          return this.dockerHandler.getLatestVersion(request.params.arguments as any)
         default:
           throw new McpError(
             ErrorCode.MethodNotFound,

@@ -9,6 +9,8 @@ An MCP server that provides tools for checking latest stable package versions fr
 - Maven Central (Java)
 - Go Proxy (Go)
 - AWS Bedrock (AI Models)
+- Docker Hub (Container Images)
+- GitHub Container Registry (Container Images)
 
 This server helps LLMs ensure they're recommending up-to-date package versions when writing code.
 
@@ -275,6 +277,56 @@ use_mcp_tool({
 });
 ```
 
+### 7. Docker Container Images
+
+#### check_docker_tags
+
+Check available tags for Docker container images from Docker Hub, GitHub Container Registry, or custom registries.
+
+```typescript
+// Check Docker Hub images
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_docker_tags",
+  arguments: {
+    image: "nginx",
+    limit: 5
+  }
+});
+
+// Check GitHub Container Registry images
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_docker_tags",
+  arguments: {
+    image: "ghcr.io/owner/repo",
+    registry: "ghcr"
+  }
+});
+
+// Check custom registry images
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_docker_tags",
+  arguments: {
+    image: "my-image",
+    registry: "custom",
+    customRegistry: "registry.example.com"
+  }
+});
+
+// Filter tags using regex patterns
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_docker_tags",
+  arguments: {
+    image: "node",
+    filterTags: ["^18", "^20"],
+    includeDigest: true
+  }
+});
+```
+
 ## Guidelines for LLMs
 
 When writing code that includes package dependencies, LLMs should:
@@ -291,6 +343,8 @@ When writing code that includes package dependencies, LLMs should:
    - Use AWS Bedrock tools for AI model information:
      - `check_bedrock_models` to search, list, or get specific model information
      - `get_latest_bedrock_model` to get the latest Claude Sonnet model (best for coding tasks)
+   - Use Docker container image tools:
+     - `check_docker_tags` to find available tags for Docker images from Docker Hub, GitHub Container Registry, or custom registries
 
 1. **Always Check Versions Before Writing**
    - Before writing a package.json or requirements.txt file, use the appropriate tool to check latest versions
@@ -610,6 +664,20 @@ use_mcp_tool({
   arguments: {}
 });
 
+// For Docker container images:
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_docker_tags",
+  arguments: {
+    image: "image-name",
+    registry: "dockerhub", // or "ghcr" or "custom"
+    customRegistry: "registry.example.com", // required when registry is "custom"
+    limit: 10, // optional, default is 10
+    filterTags: ["regex-pattern"], // optional
+    includeDigest: false // optional, default is false
+  }
+});
+
 2. Use the returned latest versions in your dependency files:
    - For applications: Use exact versions
    - For libraries: Use compatible ranges
@@ -628,7 +696,7 @@ use_mcp_tool({
 Example system prompt for users:
 
 ```plaintext
-When writing code that includes dependencies, you must check latest stable versions using the package-version MCP server before writing any dependency files (package.json, requirements.txt, pyproject.toml, pom.xml, build.gradle, go.mod). Use exact versions for applications and appropriate version ranges for libraries based on the package manager's conventions. Document any version-specific requirements or failed checks in comments. For AI model information, use the AWS Bedrock tools to search, list, or get specific model details.
+When writing code that includes dependencies, you must check latest stable versions using the package-version MCP server before writing any dependency files (package.json, requirements.txt, pyproject.toml, pom.xml, build.gradle, go.mod). Use exact versions for applications and appropriate version ranges for libraries based on the package manager's conventions. Document any version-specific requirements or failed checks in comments. For AI model information, use the AWS Bedrock tools to search, list, or get specific model details. For Docker container images, use the check_docker_tags tool to find available tags from Docker Hub, GitHub Container Registry, or custom registries.
 ```
 
 ## Development
@@ -684,6 +752,8 @@ No environment variables are required as this server uses public registries and 
 - Go Proxy (proxy.golang.org)
 - Maven Central (search.maven.org)
 - AWS Bedrock documentation (docs.aws.amazon.com/bedrock)
+- Docker Hub (hub.docker.com)
+- GitHub Container Registry (ghcr.io)
 
 ## License
 
