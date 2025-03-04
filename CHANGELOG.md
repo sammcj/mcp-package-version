@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.16](https://github.com/sammcj/mcp-package-version/compare/v0.1.14...v0.1.16) (2025-03-04)
+
+
+### Features
+
+* add support for container images ([f5d94d2](https://github.com/sammcj/mcp-package-version/commit/f5d94d24be268e4f8635956751741387e7c18543))
+
 ### [0.1.15](https://github.com/sammcj/mcp-package-version/compare/v0.1.14...v0.1.15) (2025-03-04)
 
 
