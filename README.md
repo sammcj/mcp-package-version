@@ -8,7 +8,8 @@ An MCP server that provides tools for checking latest stable package versions fr
 - PyPI (Python)
 - Maven Central (Java)
 - Go Proxy (Go)
-- AWS Bedrock (AI Mdels)
+- Swift Packages (Swift)
+- AWS Bedrock (AI Models)
 - Docker Hub (Container Images)
 - GitHub Container Registry (Container Images)
 
@@ -277,7 +278,39 @@ use_mcp_tool({
 });
 ```
 
-### 7. Docker Container Images
+### 7. Swift
+
+#### check_swift_versions
+
+Check latest stable versions for Swift packages in Package.swift.
+
+```typescript
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_swift_versions",
+  arguments: {
+    dependencies: [
+      {
+        url: "https://github.com/apple/swift-argument-parser",
+        version: "1.0.0",
+        requirement: "from"
+      },
+      {
+        url: "https://github.com/apple/swift-log.git",
+        version: "1.4.0",
+        requirement: "upToNextMajor"
+      }
+    ],
+    constraints: {
+      "https://github.com/apple/swift-argument-parser": {
+        majorVersion: 1
+      }
+    }
+  }
+});
+```
+
+### 8. Docker Container Images
 
 #### check_docker_tags
 
@@ -339,6 +372,7 @@ When writing code that includes package dependencies, LLMs should:
      - `check_maven_versions` for pom.xml
      - `check_gradle_versions` for build.gradle
      - `check_go_versions` for go.mod
+     - `check_swift_versions` for Package.swift
    - Use `check_package_versions` for quick bulk checks across npm and PyPI
    - Use AWS Bedrock tools for AI model information:
      - `check_bedrock_models` to search, list, or get specific model information
@@ -368,8 +402,8 @@ When writing code that includes package dependencies, LLMs should:
    // Use the returned versions in package.json
    {
      "dependencies": {
-       "express": "^{express.latestVersion}",
-       "react": "^{react.latestVersion}"
+       "express": `^${versions.find(p => p.name === 'express').latestVersion}`,
+       "react": `^${versions.find(p => p.name === 'react').latestVersion}`
      }
    }
    ```
@@ -552,6 +586,48 @@ write_to_file({
 });
 ```
 
+### Swift Project
+
+```typescript
+// 1. Check Swift package versions
+const versions = await use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_swift_versions",
+  arguments: {
+    dependencies: [
+      {
+        url: "https://github.com/apple/swift-argument-parser",
+        version: "1.0.0",
+        requirement: "from"
+      }
+    ]
+  }
+});
+
+// 2. Use the versions in Package.swift
+write_to_file({
+  path: "Package.swift",
+  content: `
+// swift-tools-version:5.5
+import PackageDescription
+
+let package = Package(
+    name: "MyProject",
+    products: [
+        .library(name: "MyProject", targets: ["MyProject"]),
+    ],
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "${versions.find(p => p.name === 'swift-argument-parser').latestVersion}"),
+    ],
+    targets: [
+        .target(name: "MyProject", dependencies: [.product(name: "ArgumentParser", package: "swift-argument-parser")]),
+        .testTarget(name: "MyProjectTests", dependencies: ["MyProject"]),
+    ]
+)
+`
+});
+```
+
 This ensures that new projects always start with the latest stable versions of packages.
 
 ---
@@ -581,7 +657,7 @@ use_mcp_tool({
   arguments: {
     requirements: [
       "package-name==version"
-    }
+    ]
   }
 });
 
@@ -646,6 +722,21 @@ use_mcp_tool({
   }
 });
 
+// For Swift (Package.swift):
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_swift_versions",
+  arguments: {
+    dependencies: [
+      {
+        url: "https://github.com/package/repo",
+        version: "version",
+        requirement: "from" // or "upToNextMajor" or "exact"
+      }
+    ]
+  }
+});
+
 // For AWS Bedrock models:
 use_mcp_tool({
   server_name: "package-version",
@@ -685,6 +776,7 @@ use_mcp_tool({
      - Python: >= for compatible versions, == for exact versions
      - Java: Use the version directly (Maven/Gradle handle ranges differently)
      - Go: Use semantic version prefixes (e.g., v1.2.3)
+     - Swift: Use from, upToNextMajor, or exact version requirements
    - Document any version-specific requirements in comments
 
 3. If version checks fail:
@@ -696,7 +788,7 @@ use_mcp_tool({
 Example system prompt for users:
 
 ```plaintext
-When writing code that includes dependencies, you must check latest stable versions using the package-version MCP server before writing any dependency files (package.json, requirements.txt, pyproject.toml, pom.xml, build.gradle, go.mod). Use exact versions for applications and appropriate version ranges for libraries based on the package manager's conventions. Document any version-specific requirements or failed checks in comments. For AI model information, use the AWS Bedrock tools to search, list, or get specific model details. For Docker container images, use the check_docker_tags tool to find available tags from Docker Hub, GitHub Container Registry, or custom registries.
+When writing code that includes dependencies, you must check latest stable versions using the package-version MCP server before writing any dependency files (package.json, requirements.txt, pyproject.toml, pom.xml, build.gradle, go.mod, Package.swift). Use exact versions for applications and appropriate version ranges for libraries based on the package manager's conventions. Document any version-specific requirements or failed checks in comments. For AI model information, use the AWS Bedrock tools to search, list, or get specific model details. For Docker container images, use the check_docker_tags tool to find available tags from Docker Hub, GitHub Container Registry, or custom registries.
 ```
 
 ## Development
@@ -751,6 +843,7 @@ No environment variables are required as this server uses public registries and 
 - PyPI (pypi.org)
 - Go Proxy (proxy.golang.org)
 - Maven Central (search.maven.org)
+- Swift Packages (GitHub API)
 - AWS Bedrock documentation (docs.aws.amazon.com/bedrock)
 - Docker Hub (hub.docker.com)
 - GitHub Container Registry (ghcr.io)

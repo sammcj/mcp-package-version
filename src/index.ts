@@ -16,6 +16,7 @@ import {
   GoModule,
   VersionConstraints,
   DockerImageQuery,
+  SwiftDependency,
 } from './types/index.js'
 import { NpmHandler } from './handlers/npm.js'
 import { PythonHandler } from './handlers/python.js'
@@ -23,6 +24,7 @@ import { JavaHandler } from './handlers/java.js'
 import { GoHandler } from './handlers/go.js'
 import { BedrockHandler } from './handlers/bedrock.js'
 import { DockerHandler } from './handlers/docker.js'
+import { SwiftHandler } from './handlers/swift.js'
 
 class PackageVersionServer {
   private server: Server
@@ -32,6 +34,7 @@ class PackageVersionServer {
   private goHandler: GoHandler
   private bedrockHandler: BedrockHandler
   private dockerHandler: DockerHandler
+  private swiftHandler: SwiftHandler
 
   constructor() {
     this.server = new Server(
@@ -52,6 +55,7 @@ class PackageVersionServer {
     this.goHandler = new GoHandler()
     this.bedrockHandler = new BedrockHandler()
     this.dockerHandler = new DockerHandler()
+    this.swiftHandler = new SwiftHandler()
 
     this.setupToolHandlers()
 
@@ -369,6 +373,55 @@ class PackageVersionServer {
             required: ['image']
           }
         },
+        {
+          name: 'check_swift_versions',
+          description: 'Check latest stable versions for Swift packages in Package.swift',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              dependencies: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    url: {
+                      type: 'string',
+                      description: 'Package URL (e.g., "https://github.com/apple/swift-argument-parser")'
+                    },
+                    version: {
+                      type: 'string',
+                      description: 'Current version (optional)'
+                    },
+                    requirement: {
+                      type: 'string',
+                      description: 'Version requirement type (e.g., "from", "upToNextMajor", "exact")'
+                    }
+                  },
+                  required: ['url']
+                },
+                description: 'Array of Swift package dependencies'
+              },
+              constraints: {
+                type: 'object',
+                additionalProperties: {
+                  type: 'object',
+                  properties: {
+                    majorVersion: {
+                      type: 'number',
+                      description: 'Limit updates to this major version'
+                    },
+                    excludePackage: {
+                      type: 'boolean',
+                      description: 'Exclude this package from updates'
+                    }
+                  }
+                },
+                description: 'Optional constraints for specific packages'
+              }
+            },
+            required: ['dependencies']
+          }
+        },
       ],
     }))
 
@@ -403,6 +456,11 @@ class PackageVersionServer {
           return this.bedrockHandler.getLatestVersion({ action: 'get_latest_claude_sonnet' })
         case 'check_docker_tags':
           return this.dockerHandler.getLatestVersion(request.params.arguments as any)
+        case 'check_swift_versions':
+          return this.swiftHandler.getLatestVersion(request.params.arguments as {
+            dependencies: SwiftDependency[],
+            constraints?: VersionConstraints
+          })
         default:
           throw new McpError(
             ErrorCode.MethodNotFound,

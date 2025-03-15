@@ -5,7 +5,7 @@ export interface PackageVersion {
   name: string
   currentVersion?: string
   latestVersion: string
-  registry: 'npm' | 'pypi' | 'maven' | 'go' | 'docker' | 'ghcr' | 'custom'
+  registry: 'npm' | 'pypi' | 'maven' | 'go' | 'docker' | 'ghcr' | 'custom' | 'swift'
   skipped?: boolean
   skipReason?: string
 }
@@ -66,6 +66,13 @@ export interface GoReplace {
   old: string
   new: string
   version?: string
+}
+
+// Swift types
+export interface SwiftDependency {
+  url: string
+  version?: string
+  requirement?: string // e.g., 'from', 'upToNextMajor', 'exact'
 }
 
 // Common handler interface
