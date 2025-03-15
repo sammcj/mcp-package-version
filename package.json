@@ -14,6 +14,9 @@
     "requirements.txt",
     "package.json",
     "npm",
+    "swift",
+    "python",
+    "go",
     "pip"
   ],
   "bugs": {
@@ -38,12 +41,12 @@
     "bump": "npx -y standard-version --skip.tag && git add . ; git commit -m 'chore: bump version' ; git push"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.6.1",
-    "axios": "1.8.1",
+    "@modelcontextprotocol/sdk": "1.7.0",
+    "axios": "1.8.3",
     "semver": "7.7.1"
   },
   "devDependencies": {
-    "@types/node": "^22.13.7",
+    "@types/node": "^22.13.10",
     "typescript": "^5.8.2"
   }
 }
