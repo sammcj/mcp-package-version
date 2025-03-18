@@ -105,8 +105,6 @@ export class BedrockHandler implements PackageHandler {
           });
         }
       }
-
-      console.log(`Successfully parsed ${models.length} models from HTML`);
     } catch (error) {
       console.error('Error parsing HTML:', error);
     }
