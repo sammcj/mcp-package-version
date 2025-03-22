@@ -12,6 +12,7 @@ An MCP server that provides tools for checking latest stable package versions fr
 - AWS Bedrock (AI Models)
 - Docker Hub (Container Images)
 - GitHub Container Registry (Container Images)
+- GitHub Actions
 
 This server helps LLMs ensure they're recommending up-to-date package versions when writing code.
 
@@ -310,7 +311,36 @@ use_mcp_tool({
 });
 ```
 
-### 8. Docker Container Images
+### 8. GitHub Actions
+
+#### check_github_actions
+
+Check latest versions for GitHub Actions.
+
+```typescript
+// Check latest versions for GitHub Actions
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_github_actions",
+  arguments: {
+    actions: [
+      {
+        owner: "actions",
+        repo: "checkout",
+        currentVersion: "v3"
+      },
+      {
+        owner: "actions",
+        repo: "setup-node",
+        currentVersion: "v3"
+      }
+    ],
+    includeDetails: true // Optional: include published date and URL
+  }
+});
+```
+
+### 9. Docker Container Images
 
 #### check_docker_tags
 
@@ -377,6 +407,8 @@ When writing code that includes package dependencies, LLMs should:
    - Use AWS Bedrock tools for AI model information:
      - `check_bedrock_models` to search, list, or get specific model information
      - `get_latest_bedrock_model` to get the latest Claude Sonnet model (best for coding tasks)
+   - Use GitHub Actions tools:
+     - `check_github_actions` to find the latest versions of GitHub Actions
    - Use Docker container image tools:
      - `check_docker_tags` to find available tags for Docker images from Docker Hub, GitHub Container Registry, or custom registries
 
@@ -755,6 +787,22 @@ use_mcp_tool({
   arguments: {}
 });
 
+// For GitHub Actions:
+use_mcp_tool({
+  server_name: "package-version",
+  tool_name: "check_github_actions",
+  arguments: {
+    actions: [
+      {
+        owner: "owner",
+        repo: "repo",
+        currentVersion: "version" // optional
+      }
+    ],
+    includeDetails: false // optional, default is false
+  }
+});
+
 // For Docker container images:
 use_mcp_tool({
   server_name: "package-version",
@@ -788,7 +836,7 @@ use_mcp_tool({
 Example system prompt for users:
 
 ```plaintext
-When writing code that includes dependencies, you must check latest stable versions using the package-version MCP server before writing any dependency files (package.json, requirements.txt, pyproject.toml, pom.xml, build.gradle, go.mod, Package.swift). Use exact versions for applications and appropriate version ranges for libraries based on the package manager's conventions. Document any version-specific requirements or failed checks in comments. For AI model information, use the AWS Bedrock tools to search, list, or get specific model details. For Docker container images, use the check_docker_tags tool to find available tags from Docker Hub, GitHub Container Registry, or custom registries.
+When writing code that includes dependencies, you must check latest stable versions using the package-version MCP server before writing any dependency files (package.json, requirements.txt, pyproject.toml, pom.xml, build.gradle, go.mod, Package.swift). Use exact versions for applications and appropriate version ranges for libraries based on the package manager's conventions. Document any version-specific requirements or failed checks in comments. For AI model information, use the AWS Bedrock tools to search, list, or get specific model details. For GitHub Actions, use the check_github_actions tool to find the latest versions. For Docker container images, use the check_docker_tags tool to find available tags from Docker Hub, GitHub Container Registry, or custom registries.
 ```
 
 ## Development
