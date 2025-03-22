@@ -17,6 +17,7 @@ import {
   VersionConstraints,
   DockerImageQuery,
   SwiftDependency,
+  GitHubActionQuery,
 } from './types/index.js'
 import { NpmHandler } from './handlers/npm.js'
 import { PythonHandler } from './handlers/python.js'
@@ -25,6 +26,7 @@ import { GoHandler } from './handlers/go.js'
 import { BedrockHandler } from './handlers/bedrock.js'
 import { DockerHandler } from './handlers/docker.js'
 import { SwiftHandler } from './handlers/swift.js'
+import { GitHubActionsHandler } from './handlers/github-actions.js'
 
 class PackageVersionServer {
   private server: Server
@@ -35,6 +37,7 @@ class PackageVersionServer {
   private bedrockHandler: BedrockHandler
   private dockerHandler: DockerHandler
   private swiftHandler: SwiftHandler
+  private githubActionsHandler: GitHubActionsHandler
 
   constructor() {
     this.server = new Server(
@@ -56,6 +59,7 @@ class PackageVersionServer {
     this.bedrockHandler = new BedrockHandler()
     this.dockerHandler = new DockerHandler()
     this.swiftHandler = new SwiftHandler()
+    this.githubActionsHandler = new GitHubActionsHandler()
 
     this.setupToolHandlers()
 
@@ -422,6 +426,43 @@ class PackageVersionServer {
             required: ['dependencies']
           }
         },
+        {
+          name: 'check_github_actions',
+          description: 'Check latest versions for GitHub Actions',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              actions: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    owner: {
+                      type: 'string',
+                      description: 'GitHub Action owner (username or organization)'
+                    },
+                    repo: {
+                      type: 'string',
+                      description: 'GitHub Action repository name'
+                    },
+                    currentVersion: {
+                      type: 'string',
+                      description: 'Current version (optional)'
+                    }
+                  },
+                  required: ['owner', 'repo']
+                },
+                description: 'Array of GitHub Actions to check'
+              },
+              includeDetails: {
+                type: 'boolean',
+                description: 'Include additional details like published date and URL',
+                default: false
+              }
+            },
+            required: ['actions']
+          }
+        },
       ],
     }))
 
@@ -461,6 +502,8 @@ class PackageVersionServer {
             dependencies: SwiftDependency[],
             constraints?: VersionConstraints
           })
+        case 'check_github_actions':
+          return this.githubActionsHandler.getLatestVersion(request.params.arguments as unknown as GitHubActionQuery)
         default:
           throw new McpError(
             ErrorCode.MethodNotFound,

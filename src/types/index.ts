@@ -1,11 +1,12 @@
 export * from './bedrock.js';
 export * from './docker.js';
+export * from './github-actions.js';
 
 export interface PackageVersion {
   name: string
   currentVersion?: string
   latestVersion: string
-  registry: 'npm' | 'pypi' | 'maven' | 'go' | 'docker' | 'ghcr' | 'custom' | 'swift'
+  registry: 'npm' | 'pypi' | 'maven' | 'go' | 'docker' | 'ghcr' | 'custom' | 'swift' | 'github-actions'
   skipped?: boolean
   skipReason?: string
 }
