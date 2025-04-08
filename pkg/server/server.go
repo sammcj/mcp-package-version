@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"strings"
@@ -38,6 +39,27 @@ func NewPackageVersionServer(version, commit, buildDate string) *PackageVersionS
 	logger.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp: true,
 	})
+
+	// Check if we're running in stdio mode by examining command line arguments
+	isStdioMode := false
+	for _, arg := range os.Args {
+		if arg == "stdio" {
+			isStdioMode = true
+			break
+		}
+	}
+
+	// If in stdio mode, disable logging to stdout/stderr completely
+	if isStdioMode {
+		// Create log file
+		logFile, err := os.OpenFile("mcp-package-version.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		if err == nil {
+			logger.SetOutput(logFile)
+		} else {
+			// If we can't open the log file, disable logging completely
+			logger.SetOutput(io.Discard)
+		}
+	}
 
 	return &PackageVersionServer{
 		logger:      logger,
@@ -87,6 +109,15 @@ func (s *PackageVersionServer) Initialize(srv *mcpserver.MCPServer) error {
 
 // Start starts the MCP server with the specified transport
 func (s *PackageVersionServer) Start(transport, port, baseURL string) error {
+	// Configure logger based on transport
+	if transport == "stdio" {
+		// When using stdio transport, redirect logs to a file to avoid interfering with stdio communication
+		logFile, err := os.OpenFile("mcp-package-version.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		if err == nil {
+			s.logger.SetOutput(logFile)
+		}
+	}
+
 	// Create a new MCP server
 	s.logger.WithFields(logrus.Fields{
 		"transport": transport,
@@ -274,9 +305,7 @@ func (s *PackageVersionServer) registerPythonTools(srv *mcpserver.MCPServer) {
 		mcp.WithArray("requirements",
 			mcp.Required(),
 			mcp.Description("Array of requirements from requirements.txt"),
-			mcp.Items(map[string]interface{}{
-				"type": "string",
-			}),
+			mcp.Items("string"),
 		),
 	)
 
@@ -315,9 +344,7 @@ func (s *PackageVersionServer) registerJavaTools(srv *mcpserver.MCPServer) {
 		mcp.WithArray("dependencies",
 			mcp.Required(),
 			mcp.Description("Array of Maven dependencies"),
-			mcp.Items(map[string]interface{}{
-				"type": "object",
-			}),
+			mcp.Items("object"),
 		),
 	)
 
@@ -333,9 +360,7 @@ func (s *PackageVersionServer) registerJavaTools(srv *mcpserver.MCPServer) {
 		mcp.WithArray("dependencies",
 			mcp.Required(),
 			mcp.Description("Array of Gradle dependencies"),
-			mcp.Items(map[string]interface{}{
-				"type": "object",
-			}),
+			mcp.Items("object"),
 		),
 	)
 
@@ -448,9 +473,7 @@ func (s *PackageVersionServer) registerDockerTool(srv *mcpserver.MCPServer) {
 		),
 		mcp.WithArray("filterTags",
 			mcp.Description("Array of regex patterns to filter tags"),
-			mcp.Items(map[string]interface{}{
-				"type": "string",
-			}),
+			mcp.Items("string"),
 		),
 		mcp.WithBoolean("includeDigest",
 			mcp.Description("Include image digest in results"),
@@ -481,9 +504,7 @@ func (s *PackageVersionServer) registerSwiftTool(srv *mcpserver.MCPServer) {
 		mcp.WithArray("dependencies",
 			mcp.Required(),
 			mcp.Description("Array of Swift package dependencies"),
-			mcp.Items(map[string]interface{}{
-				"type": "object",
-			}),
+			mcp.Items("object"),
 		),
 		mcp.WithObject("constraints",
 			mcp.Description("Optional constraints for specific packages"),
@@ -509,9 +530,7 @@ func (s *PackageVersionServer) registerGitHubActionsTool(srv *mcpserver.MCPServe
 		mcp.WithArray("actions",
 			mcp.Required(),
 			mcp.Description("Array of GitHub Actions to check"),
-			mcp.Items(map[string]interface{}{
-				"type": "object",
-			}),
+			mcp.Items("object"),
 		),
 		mcp.WithBoolean("includeDetails",
 			mcp.Description("Include additional details like published date and URL"),
