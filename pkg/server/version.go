@@ -3,7 +3,7 @@ package server
 // Version information
 var (
 	// DefaultVersion is the default version of the application
-	DefaultVersion = "0.1.0"
+	DefaultVersion = "2.0.1"
 
 	// DefaultCommit is the default git commit hash
 	DefaultCommit = "unknown"

@@ -10,9 +10,6 @@ import (
 )
 
 func main() {
-	// Print version information directly
-	fmt.Printf("Direct version info: %s, %s, %s\n", version.Version, version.Commit, version.BuildDate)
-
 	// Create a new package version server
 	packageVersionServer := server.NewPackageVersionServer(version.Version, version.Commit, version.BuildDate)
 
