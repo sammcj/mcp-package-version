@@ -56,7 +56,7 @@ Using go run:
 {
   "mcpServers": {
     "package-version": {
-        "command": "go run github.com/sammcj/gollama@HEAD",
+        "command": "go run github.com/sammcj/mcp-package-version@HEAD",
       }
   }
 }
