@@ -30,17 +30,13 @@ Requirements:
 
 - A modern go version installed (See [Go Installation](https://go.dev/doc/install))
 
+Using `go install` (Recommended for MCP Client Setup):
+
 ```bash
 go install github.com/sammcj/mcp-package-version/v2@HEAD
 ```
 
-Then setup your client to use the MCP server
-
-- For the Cline VSCode Extension this will be `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
-- For Claude Desktop `~/Library/Application\ Support/Claude/claude_desktop_config.json`
-- For GoMCP `~/.config/gomcp/config.yaml`
-
-Assuming you've installed the binary with `go install github.com/sammcj/mcp-package-version/v2@HEAD` and your `$GOPATH` is `/Users/sammcj/go/bin`, you can provide the full path to the binary:
+Then setup your client to use the MCP server. Assuming you've installed the binary with `go install github.com/sammcj/mcp-package-version/v2@HEAD` and your `$GOPATH` is `/Users/sammcj/go/bin`, you can provide the full path to the binary:
 
 ```json
 {
@@ -52,63 +48,11 @@ Assuming you've installed the binary with `go install github.com/sammcj/mcp-pack
 }
 ```
 
-### Go Path
-
-If `$GOPATH/bin` is not in your `PATH`, you'll need to provide the full path to the binary when configuring your MCP client (e.g. `/Users/sammcj/go/bin/mcp-package-version`).
-
-If you haven't used go applications before and have only just installed go, you may not have a `$GOPATH` set up in your environment. This is important for any `go install` command to work correctly.
-
-> **Tip: Understanding `$GOPATH`**
->
-> The `go install` command downloads and compiles Go packages, placing the resulting binary executable in the `bin` subdirectory of your `$GOPATH`. By default, `$GOPATH` is > usually located at `$HOME/go` on Unix-like systems (including macOS). If you haven't configured `$GOPATH` explicitly, Go uses this default.
->
-> The location `$GOPATH/bin` (e.g., `/Users/your_username/go/bin`) needs to be included in your system's `PATH` environment variable if you want to run installed Go binaries directly by name from any terminal location.
->
-> You can add the following line to your shell configuration file (e.g., `~/.zshrc`, `~/.bashrc`) to set `$GOPATH` to the default if it's not already set, and ensure `$GOPATH/bin` is in your `PATH`:
->
-> ```bash
-> [ -z "$GOPATH" ] && export GOPATH="$HOME/go"; echo "$PATH" | grep -q ":$GOPATH/bin" || export PATH="$PATH:$GOPATH/bin"
-> ```
->
-> After adding this line, restart your terminal or MCP client.
+- For the Cline VSCode Extension this will be `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
+- For Claude Desktop `~/Library/Application\ Support/Claude/claude_desktop_config.json`
+- For GoMCP `~/.config/gomcp/config.yaml`
 
 ### Other Installation Methods
-
-Using `go install` (Recommended for MCP Client Setup):
-
-The simplest way to use this server with an MCP client is to install it first:
-
-```bash
-# Install the latest released version
-go install github.com/sammcj/mcp-package-version/v2@latest
-```
-
-This command downloads, compiles, and installs the `mcp-package-version` binary to your `$GOPATH/bin` or `$GOBIN` directory. Ensure this directory is in your system's PATH.
-
-Then, configure your MCP client to use the installed binary name directly:
-
-```json
-{
-  "mcpServers": {
-    "package-version": {
-      "command": "mcp-package-version"
-    }
-  }
-}
-```
-
-Note: If your `$GOPATH/bin` is not in your PATH, you can specify the full path to the binary in the `command` field, e.g. `/Users/sam/go/bin/mcp-package-version`.
-
-*(Using `go run github.com/...` directly in the `command` field is **not supported** and will likely cause `ENOENT` errors.)*
-
-You can also install a specific version, but remember to keep it up to date to get the latest features and fixes:
-
-```bash
-go install github.com/sammcj/mcp-package-version/v2@v2.0.5
-```
-*(Replace `v2.0.5` with the desired version tag)*
-
-> **Note:** The module path includes `/v2` suffix for v2.x.x versions according to Go's module versioning rules.
 
 Or clone the repository and build it:
 
@@ -136,13 +80,25 @@ Note: If running in a container, you'll need to configure the client to use the 
 }
 ```
 
-### Version Information
+#### Tip: Go Path
 
-You can check the version of the installed binary:
+If `$GOPATH/bin` is not in your `PATH`, you'll need to provide the full path to the binary when configuring your MCP client (e.g. `/Users/sammcj/go/bin/mcp-package-version`).
 
-```bash
-mcp-package-version version
-```
+If you haven't used go applications before and have only just installed go, you may not have a `$GOPATH` set up in your environment. This is important for any `go install` command to work correctly.
+
+> **Understanding `$GOPATH`**
+>
+> The `go install` command downloads and compiles Go packages, placing the resulting binary executable in the `bin` subdirectory of your `$GOPATH`. By default, `$GOPATH` is > usually located at `$HOME/go` on Unix-like systems (including macOS). If you haven't configured `$GOPATH` explicitly, Go uses this default.
+>
+> The location `$GOPATH/bin` (e.g., `/Users/your_username/go/bin`) needs to be included in your system's `PATH` environment variable if you want to run installed Go binaries directly by name from any terminal location.
+>
+> You can add the following line to your shell configuration file (e.g., `~/.zshrc`, `~/.bashrc`) to set `$GOPATH` to the default if it's not already set, and ensure `$GOPATH/bin` is in your `PATH`:
+>
+> ```bash
+> [ -z "$GOPATH" ] && export GOPATH="$HOME/go"; echo "$PATH" | grep -q ":$GOPATH/bin" || export PATH="$PATH:$GOPATH/bin"
+> ```
+>
+> After adding this line, restart your terminal or MCP client.
 
 ## Usage
 
