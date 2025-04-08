@@ -19,7 +19,7 @@ all: build
 build:
 	mkdir -p bin
 	$(GO) build $(GOFLAGS) -o $(BINARY_PATH) \
-		-ldflags "-X github.com/sammcj/mcp-package-version/pkg/version.Version=$(shell git describe --tags --always --dirty 2>/dev/null || echo '0.1.0-dev') \
+		-ldflags "-X github.com/sammcj/mcp-package-version/pkg/version.Version=$(shell git fetch --tags && git describe --tags --always --dirty 2>/dev/null || echo '0.1.0-dev') \
 		-X github.com/sammcj/mcp-package-version/pkg/version.Commit=$(shell git rev-parse --short HEAD 2>/dev/null || echo 'unknown') \
 		-X github.com/sammcj/mcp-package-version/pkg/version.BuildDate=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")" \
 		.
