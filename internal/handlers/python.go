@@ -100,7 +100,7 @@ func parseRequirement(req string) (name string, version string, err error) {
 
 // GetLatestVersionFromRequirements gets the latest version of Python packages from requirements.txt
 func (h *PythonHandler) GetLatestVersionFromRequirements(ctx context.Context, args map[string]interface{}) (*mcp.CallToolResult, error) {
-	h.logger.Info("Getting latest Python package versions from requirements.txt")
+	h.logger.Debug("Getting latest Python package versions from requirements.txt")
 
 	// Parse requirements
 	reqsRaw, ok := args["requirements"]
@@ -189,7 +189,7 @@ func (h *PythonHandler) GetLatestVersionFromRequirements(ctx context.Context, ar
 
 // GetLatestVersionFromPyProject gets the latest version of Python packages from pyproject.toml
 func (h *PythonHandler) GetLatestVersionFromPyProject(ctx context.Context, args map[string]interface{}) (*mcp.CallToolResult, error) {
-	h.logger.Info("Getting latest Python package versions from pyproject.toml")
+	h.logger.Debug("Getting latest Python package versions from pyproject.toml")
 
 	// Parse dependencies
 	depsRaw, ok := args["dependencies"]

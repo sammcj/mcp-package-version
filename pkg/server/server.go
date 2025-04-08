@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
@@ -16,11 +17,18 @@ import (
 	"github.com/sammcj/mcp-package-version/v2/internal/cache"
 	"github.com/sammcj/mcp-package-version/v2/internal/handlers"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 const (
 	// CacheTTL is the time-to-live for cached data (1 hour)
 	CacheTTL = 1 * time.Hour
+	// MaxLogSize is the maximum size of the log file in megabytes before rotation
+	MaxLogSize = 1
+	// MaxLogBackups is the maximum number of old log files to retain
+	MaxLogBackups = 3
+	// MaxLogAge is the maximum number of days to retain old log files
+	MaxLogAge = 28
 )
 
 // PackageVersionServer implements the MCPServerHandler interface for the package version server
@@ -33,6 +41,25 @@ type PackageVersionServer struct {
 	BuildDate   string
 }
 
+// getLogFilePath returns the path to the log file
+func getLogFilePath() string {
+	// Get user's home directory
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		// Fallback to current directory if home directory can't be determined
+		return "mcp-package-version.log"
+	}
+
+	// Create logs directory in user's home directory if it doesn't exist
+	logsDir := filepath.Join(homeDir, ".mcp-package-version", "logs")
+	if err := os.MkdirAll(logsDir, 0755); err != nil {
+		// Fallback to current directory if logs directory can't be created
+		return "mcp-package-version.log"
+	}
+
+	return filepath.Join(logsDir, "mcp-package-version.log")
+}
+
 // NewPackageVersionServer creates a new package version server
 func NewPackageVersionServer(version, commit, buildDate string) *PackageVersionServer {
 	logger := logrus.New()
@@ -40,26 +67,24 @@ func NewPackageVersionServer(version, commit, buildDate string) *PackageVersionS
 		FullTimestamp: true,
 	})
 
-	// Check if we're running in stdio mode by examining command line arguments
-	isStdioMode := false
-	for _, arg := range os.Args {
-		if arg == "stdio" {
-			isStdioMode = true
-			break
-		}
+	logFilePath := getLogFilePath()
+
+	// Configure log rotation
+	logRotator := &lumberjack.Logger{
+		Filename:   logFilePath,
+		MaxSize:    MaxLogSize,    // megabytes
+		MaxBackups: MaxLogBackups, // number of backups
+		MaxAge:     MaxLogAge,     // days
+		Compress:   true,          // compress old log files
 	}
 
-	// If in stdio mode, disable logging to stdout/stderr completely
-	if isStdioMode {
-		// Create log file
-		logFile, err := os.OpenFile("mcp-package-version.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-		if err == nil {
-			logger.SetOutput(logFile)
-		} else {
-			// If we can't open the log file, disable logging completely
-			logger.SetOutput(io.Discard)
-		}
-	}
+	// Set logger output to the rotated log file
+	logger.SetOutput(logRotator)
+
+
+	// Create a fallback logger that discards all output in case we can't open the log file
+	fallbackLogger := logrus.New()
+	fallbackLogger.SetOutput(io.Discard)
 
 	return &PackageVersionServer{
 		logger:      logger,
@@ -85,13 +110,27 @@ func (s *PackageVersionServer) Capabilities() []mcpserver.ServerOption {
 
 // Initialize sets up the server
 func (s *PackageVersionServer) Initialize(srv *mcpserver.MCPServer) error {
-	// Set up the logger
-	pid := os.Getpid()
-	s.logger.WithFields(logrus.Fields{
-		"pid": pid,
-	}).Info("Starting package-version MCP server")
+	// Check if we're in sse mode
+	isStdioMode := true
+	for i, arg := range os.Args {
+		if arg == "sse" ||
+		   (arg == "--transport" && i+1 < len(os.Args) && os.Args[i+1] == "sse") ||
+		   (arg == "-t" && i+1 < len(os.Args) && os.Args[i+1] == "sse") {
+			isStdioMode = false
+			break
+		}
+	}
 
-	s.logger.Info("Initializing package version handlers")
+	// Only log detailed information if not in stdio mode
+	if !isStdioMode {
+		// Set up the logger
+		pid := os.Getpid()
+		s.logger.WithFields(logrus.Fields{
+			"pid": pid,
+		}).Debug("Starting package-version MCP server")
+
+		s.logger.Debug("Initialising package version handlers")
+	}
 
 	// Register tools and handlers
 	s.registerNpmTool(srv)
@@ -103,27 +142,29 @@ func (s *PackageVersionServer) Initialize(srv *mcpserver.MCPServer) error {
 	s.registerSwiftTool(srv)
 	s.registerGitHubActionsTool(srv)
 
-	s.logger.Info("All handlers registered successfully")
+	if !isStdioMode {
+		s.logger.Debug("All handlers registered successfully")
+	}
+
 	return nil
 }
 
 // Start starts the MCP server with the specified transport
 func (s *PackageVersionServer) Start(transport, port, baseURL string) error {
-	// Configure logger based on transport
-	if transport == "stdio" {
-		// When using stdio transport, redirect logs to a file to avoid interfering with stdio communication
-		logFile, err := os.OpenFile("mcp-package-version.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-		if err == nil {
-			s.logger.SetOutput(logFile)
-		}
-	}
+	// Check if we're in stdio mode
+	isStdioMode := transport == "stdio"
 
-	// Create a new MCP server
-	s.logger.WithFields(logrus.Fields{
-		"transport": transport,
-		"port":      port,
-		"baseURL":   baseURL,
-	}).Info("Starting MCP server")
+	// Only log transport details if not in stdio mode or if already logging to file
+	if !isStdioMode {
+		s.logger.WithFields(logrus.Fields{
+			"transport": transport,
+			"port":      port,
+			"baseURL":   baseURL,
+		}).Info("Starting MCP server")
+	} else {
+		// In stdio mode, just log minimal information
+		s.logger.Debug("Starting MCP server in stdio mode")
+	}
 
 	// Create a context with cancellation for graceful shutdown
 	_, cancel := context.WithCancel(context.Background())
@@ -224,16 +265,16 @@ func (s *PackageVersionServer) Start(transport, port, baseURL string) error {
 			}).Info("Starting SSE server")
 
 			// Log the available routes for debugging
-			s.logger.Info("Expected SSE routes:")
-			s.logger.Info("- " + sseBaseURL + "/")
-			s.logger.Info("- " + sseBaseURL + "/sse")
-			s.logger.Info("- " + sseBaseURL + "/events")
-			s.logger.Info("- " + sseBaseURL + "/mcp")
-			s.logger.Info("- " + sseBaseURL + "/mcp/sse")
+			s.logger.Debug("Expected SSE routes:")
+			s.logger.Debug("- " + sseBaseURL + "/")
+			s.logger.Debug("- " + sseBaseURL + "/sse")
+			s.logger.Debug("- " + sseBaseURL + "/events")
+			s.logger.Debug("- " + sseBaseURL + "/mcp")
+			s.logger.Debug("- " + sseBaseURL + "/mcp/sse")
 
 			// Try accessing the routes to see if they're available
-			s.logger.Info("Checking routes availability:")
-			s.logger.Info("To test routes, run: curl " + sseBaseURL + "/sse")
+			s.logger.Debug("Checking routes availability:")
+			s.logger.Debug("To test routes, run: curl " + sseBaseURL + "/sse")
 
 			if err := sseServer.Start(listenAddr); err != nil {
 				errCh <- fmt.Errorf("SSE server error: %w", err)
@@ -242,13 +283,16 @@ func (s *PackageVersionServer) Start(transport, port, baseURL string) error {
 
 		// Wait for signal to shut down
 		<-sigCh
-		s.logger.Info("Shutting down SSE server...")
+		s.logger.Debug("Shutting down SSE server...")
 		cancel()
 		errCh <- nil
 	} else {
 		// Default to stdio transport
 		go func() {
-			s.logger.Info("STDIO server is running. Press Ctrl+C to stop.")
+			// Only log if not in stdio mode
+			if !isStdioMode {
+				s.logger.Debug("STDIO server is running. Press Ctrl+C to stop.")
+			}
 
 			if err := mcpserver.ServeStdio(srv); err != nil {
 				errCh <- fmt.Errorf("STDIO server error: %w", err)
@@ -257,7 +301,7 @@ func (s *PackageVersionServer) Start(transport, port, baseURL string) error {
 
 		// Wait for signal to shut down
 		<-sigCh
-		s.logger.Info("Shutting down STDIO server...")
+		s.logger.Debug("Shutting down STDIO server...")
 		cancel()
 		errCh <- nil
 	}
@@ -268,9 +312,7 @@ func (s *PackageVersionServer) Start(transport, port, baseURL string) error {
 
 // registerNpmTool registers the npm version checking tool
 func (s *PackageVersionServer) registerNpmTool(srv *mcpserver.MCPServer) {
-	s.logger.Info("Registering NPM version checking tool")
-
-	// Create NPM handler
+	// Create NPM handler with a logger that doesn't output to stdout/stderr in stdio mode
 	npmHandler := handlers.NewNpmHandler(s.logger, s.sharedCache)
 
 	// Add NPM tool
@@ -294,9 +336,7 @@ func (s *PackageVersionServer) registerNpmTool(srv *mcpserver.MCPServer) {
 
 // registerPythonTools registers the Python version checking tools
 func (s *PackageVersionServer) registerPythonTools(srv *mcpserver.MCPServer) {
-	s.logger.Info("Registering Python version checking tools")
-
-	// Create Python handler
+	// Create Python handler with a logger that doesn't output to stdout/stderr in stdio mode
 	pythonHandler := handlers.NewPythonHandler(s.logger, s.sharedCache)
 
 	// Tool for requirements.txt
@@ -333,9 +373,7 @@ func (s *PackageVersionServer) registerPythonTools(srv *mcpserver.MCPServer) {
 
 // registerJavaTools registers the Java version checking tools
 func (s *PackageVersionServer) registerJavaTools(srv *mcpserver.MCPServer) {
-	s.logger.Info("Registering Java version checking tools")
-
-	// Create Java handler
+	// Create Java handler with a logger that doesn't output to stdout/stderr in stdio mode
 	javaHandler := handlers.NewJavaHandler(s.logger, s.sharedCache)
 
 	// Tool for Maven
@@ -373,9 +411,7 @@ func (s *PackageVersionServer) registerJavaTools(srv *mcpserver.MCPServer) {
 
 // registerGoTool registers the Go version checking tool
 func (s *PackageVersionServer) registerGoTool(srv *mcpserver.MCPServer) {
-	s.logger.Info("Registering Go version checking tool")
-
-	// Create Go handler
+	// Create Go handler with a logger that doesn't output to stdout/stderr in stdio mode
 	goHandler := handlers.NewGoHandler(s.logger, s.sharedCache)
 
 	goTool := mcp.NewTool("check_go_versions",
@@ -395,9 +431,7 @@ func (s *PackageVersionServer) registerGoTool(srv *mcpserver.MCPServer) {
 
 // registerBedrockTools registers the AWS Bedrock tools
 func (s *PackageVersionServer) registerBedrockTools(srv *mcpserver.MCPServer) {
-	s.logger.Info("Registering AWS Bedrock tools")
-
-	// Create Bedrock handler
+	// Create Bedrock handler with a logger that doesn't output to stdout/stderr in stdio mode
 	bedrockHandler := handlers.NewBedrockHandler(s.logger, s.sharedCache)
 
 	// Tool for searching Bedrock models
@@ -448,9 +482,7 @@ func (s *PackageVersionServer) registerBedrockTools(srv *mcpserver.MCPServer) {
 
 // registerDockerTool registers the Docker version checking tool
 func (s *PackageVersionServer) registerDockerTool(srv *mcpserver.MCPServer) {
-	s.logger.Info("Registering Docker version checking tool")
-
-	// Create Docker handler
+	// Create Docker handler with a logger that doesn't output to stdout/stderr in stdio mode
 	dockerHandler := handlers.NewDockerHandler(s.logger, s.sharedCache)
 
 	dockerTool := mcp.NewTool("check_docker_tags",
@@ -494,9 +526,7 @@ func (s *PackageVersionServer) registerDockerTool(srv *mcpserver.MCPServer) {
 
 // registerSwiftTool registers the Swift version checking tool
 func (s *PackageVersionServer) registerSwiftTool(srv *mcpserver.MCPServer) {
-	s.logger.Info("Registering Swift version checking tool")
-
-	// Create Swift handler
+	// Create Swift handler with a logger that doesn't output to stdout/stderr in stdio mode
 	swiftHandler := handlers.NewSwiftHandler(s.logger, s.sharedCache)
 
 	swiftTool := mcp.NewTool("check_swift_versions",
@@ -520,9 +550,7 @@ func (s *PackageVersionServer) registerSwiftTool(srv *mcpserver.MCPServer) {
 
 // registerGitHubActionsTool registers the GitHub Actions version checking tool
 func (s *PackageVersionServer) registerGitHubActionsTool(srv *mcpserver.MCPServer) {
-	s.logger.Info("Registering GitHub Actions version checking tool")
-
-	// Create GitHub Actions handler
+	// Create GitHub Actions handler with a logger that doesn't output to stdout/stderr in stdio mode
 	githubActionsHandler := handlers.NewGitHubActionsHandler(s.logger, s.sharedCache)
 
 	githubActionsTool := mcp.NewTool("check_github_actions",

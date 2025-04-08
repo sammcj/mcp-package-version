@@ -81,7 +81,7 @@ func (h *NpmHandler) getPackageInfo(packageName string) (*NpmPackageInfo, error)
 
 // GetLatestVersion gets the latest version of npm packages
 func (h *NpmHandler) GetLatestVersion(ctx context.Context, args map[string]interface{}) (*mcp.CallToolResult, error) {
-	h.logger.Info("Getting latest npm package versions")
+	h.logger.Debug("Getting latest npm package versions")
 
 	// Parse dependencies
 	depsRaw, ok := args["dependencies"]

@@ -33,7 +33,7 @@ func NewBedrockHandler(logger *logrus.Logger, cache *sync.Map) *BedrockHandler {
 
 // GetLatestVersion gets information about AWS Bedrock models
 func (h *BedrockHandler) GetLatestVersion(ctx context.Context, args map[string]interface{}) (*mcp.CallToolResult, error) {
-	h.logger.Info("Getting AWS Bedrock model information")
+	h.logger.Debug("Getting AWS Bedrock model information")
 
 	// Parse action
 	action := "list"

@@ -42,7 +42,7 @@ type GitHubReleaseResponse []struct {
 
 // GetLatestVersion gets the latest version of Swift packages
 func (h *SwiftHandler) GetLatestVersion(ctx context.Context, args map[string]interface{}) (*mcp.CallToolResult, error) {
-	h.logger.Info("Getting latest Swift package versions")
+	h.logger.Debug("Getting latest Swift package versions")
 
 	// Parse dependencies
 	depsRaw, ok := args["dependencies"]

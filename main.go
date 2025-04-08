@@ -53,10 +53,6 @@ func main() {
 			port := c.String("port")
 			baseURL := c.String("base-url")
 
-			// Log version information
-			fmt.Printf("Starting mcp-package-version version %s (commit: %s, built: %s)\n",
-				version.Version, version.Commit, version.BuildDate)
-
 			// Start the MCP server with the specified transport
 			return packageVersionServer.Start(transport, port, baseURL)
 		},
