@@ -20,7 +20,7 @@ ARG BUILD_DATE=unknown
 
 # Build with version information
 RUN CGO_ENABLED=0 GOOS=linux go build \
-  -ldflags "-X github.com/sammcj/mcp-package-version/pkg/version.Version=${VERSION} -X github.com/sammcj/mcp-package-version/pkg/version.Commit=${COMMIT} -X github.com/sammcj/mcp-package-version/pkg/version.BuildDate=${BUILD_DATE}" \
+  -ldflags "-X github.com/sammcj/mcp-package-version/v2/pkg/version.Version=${VERSION} -X github.com/sammcj/mcp-package-version/v2/pkg/version.Commit=${COMMIT} -X github.com/sammcj/mcp-package-version/v2/pkg/version.BuildDate=${BUILD_DATE}" \
   -o mcp-package-version .
 
 # Final stage

@@ -12,8 +12,8 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 	mcpserver "github.com/mark3labs/mcp-go/server"
-	"github.com/sammcj/mcp-package-version/internal/cache"
-	"github.com/sammcj/mcp-package-version/internal/handlers"
+	"github.com/sammcj/mcp-package-version/v2/internal/cache"
+	"github.com/sammcj/mcp-package-version/v2/internal/handlers"
 	"github.com/sirupsen/logrus"
 )
 

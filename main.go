@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/sammcj/mcp-package-version/pkg/server"
-	"github.com/sammcj/mcp-package-version/pkg/version"
+	"github.com/sammcj/mcp-package-version/v2/pkg/server"
+	"github.com/sammcj/mcp-package-version/v2/pkg/version"
 	"github.com/urfave/cli/v2"
 )
 

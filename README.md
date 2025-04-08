@@ -27,7 +27,7 @@ This server helps LLMs ensure they're recommending up-to-date package versions w
 ## Installation
 
 ```bash
-go install github.com/sammcj/mcp-package-version@HEAD
+go install github.com/sammcj/mcp-package-version/v2@HEAD
 ```
 
 Then setup your client to use the MCP server
@@ -36,7 +36,7 @@ Then setup your client to use the MCP server
 - For Claude Desktop `~/Library/Application\ Support/Claude/claude_desktop_config.json`
 - For GoMCP `~/.config/gomcp/config.yaml`
 
-Assuming you've installed the binary with `go install github.com/sammcj/mcp-package-version@HEAD` and your `$GOPATH` is `/Users/sam/go/bin`, you can provide the full path to the binary:
+Assuming you've installed the binary with `go install github.com/sammcj/mcp-package-version/v2@HEAD` and your `$GOPATH` is `/Users/sam/go/bin`, you can provide the full path to the binary:
 
 ```json
 {
@@ -56,7 +56,7 @@ Using go run:
 {
   "mcpServers": {
     "package-version": {
-        "command": "go run github.com/sammcj/mcp-package-version@HEAD",
+        "command": "go run github.com/sammcj/mcp-package-version/v2@HEAD",
       }
   }
 }
@@ -65,8 +65,10 @@ Using go run:
 Installing a specific version:
 
 ```bash
-go install github.com/sammcj/mcp-package-version@v2.0.0
+go install github.com/sammcj/mcp-package-version/v2@v2.0.4
 ```
+
+> **Note:** The module path includes `/v2` suffix for v2.x.x versions according to Go's module versioning rules.
 
 Or clone the repository and build it:
 
