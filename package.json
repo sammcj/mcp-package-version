@@ -38,7 +38,8 @@
     "prepare": "npm run build",
     "watch": "tsc --watch",
     "inspector": "npx @modelcontextprotocol/inspector build/index.js",
-    "bump": "npx -y standard-version --skip.tag && git add . ; git commit -m 'chore: bump version' ; git push"
+    "bump": "npx -y standard-version --skip.tag && git add . ; git commit -m 'chore: bump version' ; git push",
+    "postinstall": "echo '\u001b[33m**NOTE: As of version 2.0.0, this MCP server will be rewritten in Go, once released please visit https://github.com/sammcj/mcp-package-version for information on the updated command for your MCP client**\u001b[0m'"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.7.0",
