@@ -81,7 +81,6 @@ func NewPackageVersionServer(version, commit, buildDate string) *PackageVersionS
 	// Set logger output to the rotated log file
 	logger.SetOutput(logRotator)
 
-
 	// Create a fallback logger that discards all output in case we can't open the log file
 	fallbackLogger := logrus.New()
 	fallbackLogger.SetOutput(io.Discard)
@@ -110,27 +109,13 @@ func (s *PackageVersionServer) Capabilities() []mcpserver.ServerOption {
 
 // Initialize sets up the server
 func (s *PackageVersionServer) Initialize(srv *mcpserver.MCPServer) error {
-	// Check if we're in sse mode
-	isStdioMode := true
-	for i, arg := range os.Args {
-		if arg == "sse" ||
-		   (arg == "--transport" && i+1 < len(os.Args) && os.Args[i+1] == "sse") ||
-		   (arg == "-t" && i+1 < len(os.Args) && os.Args[i+1] == "sse") {
-			isStdioMode = false
-			break
-		}
-	}
+	// Set up the logger
+	pid := os.Getpid()
+	s.logger.WithFields(logrus.Fields{
+		"pid": pid,
+	}).Debug("Starting package-version MCP server")
 
-	// Only log detailed information if not in stdio mode
-	if !isStdioMode {
-		// Set up the logger
-		pid := os.Getpid()
-		s.logger.WithFields(logrus.Fields{
-			"pid": pid,
-		}).Debug("Starting package-version MCP server")
-
-		s.logger.Debug("Initialising package version handlers")
-	}
+	s.logger.Debug("Initialising package version handlers")
 
 	// Register tools and handlers
 	s.registerNpmTool(srv)
@@ -142,29 +127,18 @@ func (s *PackageVersionServer) Initialize(srv *mcpserver.MCPServer) error {
 	s.registerSwiftTool(srv)
 	s.registerGitHubActionsTool(srv)
 
-	if !isStdioMode {
-		s.logger.Debug("All handlers registered successfully")
-	}
+	s.logger.Debug("All handlers registered successfully")
 
 	return nil
 }
 
 // Start starts the MCP server with the specified transport
 func (s *PackageVersionServer) Start(transport, port, baseURL string) error {
-	// Check if we're in stdio mode
-	isStdioMode := transport == "stdio"
-
-	// Only log transport details if not in stdio mode or if already logging to file
-	if !isStdioMode {
-		s.logger.WithFields(logrus.Fields{
-			"transport": transport,
-			"port":      port,
-			"baseURL":   baseURL,
-		}).Info("Starting MCP server")
-	} else {
-		// In stdio mode, just log minimal information
-		s.logger.Debug("Starting MCP server in stdio mode")
-	}
+	s.logger.WithFields(logrus.Fields{
+		"transport": transport,
+		"port":      port,
+		"baseURL":   baseURL,
+	}).Debug("Starting MCP server")
 
 	// Create a context with cancellation for graceful shutdown
 	_, cancel := context.WithCancel(context.Background())
@@ -226,7 +200,7 @@ func (s *PackageVersionServer) Start(transport, port, baseURL string) error {
 			}
 		}
 
-		s.logger.WithField("baseURL", sseBaseURL).Info("Configuring SSE server with base URL")
+		s.logger.WithField("baseURL", sseBaseURL).Debug("Configuring SSE server with base URL")
 
 		// Create the SSE server with the correct base URL
 		// The WithBaseURL option is critical for the client to connect properly
@@ -253,7 +227,7 @@ func (s *PackageVersionServer) Start(transport, port, baseURL string) error {
 			s.logger.WithFields(logrus.Fields{
 				"baseURL": sseBaseURL,
 				"port":    port,
-			}).Info("SSE server is running. Press Ctrl+C to stop.")
+			}).Debug("SSE server is running. Press Ctrl+C to stop.")
 
 			// Start the SSE server on the specified port
 			// The server will listen on all interfaces (0.0.0.0)
@@ -262,7 +236,7 @@ func (s *PackageVersionServer) Start(transport, port, baseURL string) error {
 				"listenAddr": listenAddr,
 				"baseURL":    sseBaseURL,
 				"serverName": "package-version", // Use the known server name
-			}).Info("Starting SSE server")
+			}).Debug("Starting SSE server")
 
 			// Log the available routes for debugging
 			s.logger.Debug("Expected SSE routes:")
@@ -289,10 +263,8 @@ func (s *PackageVersionServer) Start(transport, port, baseURL string) error {
 	} else {
 		// Default to stdio transport
 		go func() {
-			// Only log if not in stdio mode
-			if !isStdioMode {
-				s.logger.Debug("STDIO server is running. Press Ctrl+C to stop.")
-			}
+
+			s.logger.Debug("STDIO server is running. Press Ctrl+C to stop.")
 
 			if err := mcpserver.ServeStdio(srv); err != nil {
 				errCh <- fmt.Errorf("STDIO server error: %w", err)
@@ -329,7 +301,7 @@ func (s *PackageVersionServer) registerNpmTool(srv *mcpserver.MCPServer) {
 
 	// Add NPM handler
 	srv.AddTool(npmTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		s.logger.WithField("tool", "check_npm_versions").Info("Received request")
+		s.logger.WithField("tool", "check_npm_versions").Debug("Received request")
 		return npmHandler.GetLatestVersion(ctx, request.Params.Arguments)
 	})
 }
@@ -351,7 +323,7 @@ func (s *PackageVersionServer) registerPythonTools(srv *mcpserver.MCPServer) {
 
 	// Add Python requirements.txt handler
 	srv.AddTool(pythonTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		s.logger.WithField("tool", "check_python_versions").Info("Received request")
+		s.logger.WithField("tool", "check_python_versions").Debug("Received request")
 		return pythonHandler.GetLatestVersionFromRequirements(ctx, request.Params.Arguments)
 	})
 
@@ -366,7 +338,7 @@ func (s *PackageVersionServer) registerPythonTools(srv *mcpserver.MCPServer) {
 
 	// Add Python pyproject.toml handler
 	srv.AddTool(pyprojectTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		s.logger.WithField("tool", "check_pyproject_versions").Info("Received request")
+		s.logger.WithField("tool", "check_pyproject_versions").Debug("Received request")
 		return pythonHandler.GetLatestVersionFromPyProject(ctx, request.Params.Arguments)
 	})
 }
@@ -388,7 +360,7 @@ func (s *PackageVersionServer) registerJavaTools(srv *mcpserver.MCPServer) {
 
 	// Add Maven handler
 	srv.AddTool(mavenTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		s.logger.WithField("tool", "check_maven_versions").Info("Received request")
+		s.logger.WithField("tool", "check_maven_versions").Debug("Received request")
 		return javaHandler.GetLatestVersionFromMaven(ctx, request.Params.Arguments)
 	})
 
@@ -404,7 +376,7 @@ func (s *PackageVersionServer) registerJavaTools(srv *mcpserver.MCPServer) {
 
 	// Add Gradle handler
 	srv.AddTool(gradleTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		s.logger.WithField("tool", "check_gradle_versions").Info("Received request")
+		s.logger.WithField("tool", "check_gradle_versions").Debug("Received request")
 		return javaHandler.GetLatestVersionFromGradle(ctx, request.Params.Arguments)
 	})
 }
@@ -424,7 +396,7 @@ func (s *PackageVersionServer) registerGoTool(srv *mcpserver.MCPServer) {
 
 	// Add Go handler
 	srv.AddTool(goTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		s.logger.WithField("tool", "check_go_versions").Info("Received request")
+		s.logger.WithField("tool", "check_go_versions").Debug("Received request")
 		return goHandler.GetLatestVersion(ctx, request.Params.Arguments)
 	})
 }
@@ -461,7 +433,7 @@ func (s *PackageVersionServer) registerBedrockTools(srv *mcpserver.MCPServer) {
 		s.logger.WithFields(logrus.Fields{
 			"tool":   "check_bedrock_models",
 			"action": request.Params.Arguments["action"],
-		}).Info("Received request")
+		}).Debug("Received request")
 		return bedrockHandler.GetLatestVersion(ctx, request.Params.Arguments)
 	})
 
@@ -472,7 +444,7 @@ func (s *PackageVersionServer) registerBedrockTools(srv *mcpserver.MCPServer) {
 
 	// Add Bedrock Claude Sonnet handler
 	srv.AddTool(sonnetTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		s.logger.WithField("tool", "get_latest_bedrock_model").Info("Received request")
+		s.logger.WithField("tool", "get_latest_bedrock_model").Debug("Received request")
 		// Set the action to get_latest_claude_sonnet to use the specialized method
 		return bedrockHandler.GetLatestVersion(ctx, map[string]interface{}{
 			"action": "get_latest_claude_sonnet",
@@ -519,7 +491,7 @@ func (s *PackageVersionServer) registerDockerTool(srv *mcpserver.MCPServer) {
 			"tool":     "check_docker_tags",
 			"image":    request.Params.Arguments["image"],
 			"registry": request.Params.Arguments["registry"],
-		}).Info("Received request")
+		}).Debug("Received request")
 		return dockerHandler.GetLatestVersion(ctx, request.Params.Arguments)
 	})
 }
@@ -543,7 +515,7 @@ func (s *PackageVersionServer) registerSwiftTool(srv *mcpserver.MCPServer) {
 
 	// Add Swift handler
 	srv.AddTool(swiftTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		s.logger.WithField("tool", "check_swift_versions").Info("Received request")
+		s.logger.WithField("tool", "check_swift_versions").Debug("Received request")
 		return swiftHandler.GetLatestVersion(ctx, request.Params.Arguments)
 	})
 }
@@ -568,7 +540,7 @@ func (s *PackageVersionServer) registerGitHubActionsTool(srv *mcpserver.MCPServe
 
 	// Add GitHub Actions handler
 	srv.AddTool(githubActionsTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		s.logger.WithField("tool", "check_github_actions").Info("Received request")
+		s.logger.WithField("tool", "check_github_actions").Debug("Received request")
 		return githubActionsHandler.GetLatestVersion(ctx, request.Params.Arguments)
 	})
 }
