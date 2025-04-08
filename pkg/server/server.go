@@ -317,7 +317,7 @@ func (s *PackageVersionServer) registerPythonTools(srv *mcpserver.MCPServer) {
 		mcp.WithArray("requirements",
 			mcp.Required(),
 			mcp.Description("Array of requirements from requirements.txt"),
-			mcp.Items("string"),
+			mcp.Items(map[string]interface{}{"type": "string"}),
 		),
 	)
 
@@ -354,7 +354,7 @@ func (s *PackageVersionServer) registerJavaTools(srv *mcpserver.MCPServer) {
 		mcp.WithArray("dependencies",
 			mcp.Required(),
 			mcp.Description("Array of Maven dependencies"),
-			mcp.Items("object"),
+			mcp.Items(map[string]interface{}{"type": "object"}),
 		),
 	)
 
@@ -370,7 +370,7 @@ func (s *PackageVersionServer) registerJavaTools(srv *mcpserver.MCPServer) {
 		mcp.WithArray("dependencies",
 			mcp.Required(),
 			mcp.Description("Array of Gradle dependencies"),
-			mcp.Items("object"),
+			mcp.Items(map[string]interface{}{"type": "object"}),
 		),
 	)
 
@@ -477,7 +477,7 @@ func (s *PackageVersionServer) registerDockerTool(srv *mcpserver.MCPServer) {
 		),
 		mcp.WithArray("filterTags",
 			mcp.Description("Array of regex patterns to filter tags"),
-			mcp.Items("string"),
+			mcp.Items(map[string]interface{}{"type": "string"}),
 		),
 		mcp.WithBoolean("includeDigest",
 			mcp.Description("Include image digest in results"),
@@ -506,7 +506,7 @@ func (s *PackageVersionServer) registerSwiftTool(srv *mcpserver.MCPServer) {
 		mcp.WithArray("dependencies",
 			mcp.Required(),
 			mcp.Description("Array of Swift package dependencies"),
-			mcp.Items("object"),
+			mcp.Items(map[string]interface{}{"type": "object"}),
 		),
 		mcp.WithObject("constraints",
 			mcp.Description("Optional constraints for specific packages"),
@@ -530,7 +530,7 @@ func (s *PackageVersionServer) registerGitHubActionsTool(srv *mcpserver.MCPServe
 		mcp.WithArray("actions",
 			mcp.Required(),
 			mcp.Description("Array of GitHub Actions to check"),
-			mcp.Items("object"),
+			mcp.Items(map[string]interface{}{"type": "object"}),
 		),
 		mcp.WithBoolean("includeDetails",
 			mcp.Description("Include additional details like published date and URL"),
