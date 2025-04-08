@@ -78,7 +78,7 @@ func (h *GoHandler) getLatestVersion(modulePath string) (string, error) {
 
 // GetLatestVersion gets the latest version of Go packages
 func (h *GoHandler) GetLatestVersion(ctx context.Context, args map[string]interface{}) (*mcp.CallToolResult, error) {
-	h.logger.Info("Getting latest Go package versions")
+	h.logger.Debug("Getting latest Go package versions")
 
 	// Parse dependencies
 	depsRaw, ok := args["dependencies"]

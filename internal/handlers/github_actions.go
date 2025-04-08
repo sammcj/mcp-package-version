@@ -43,7 +43,7 @@ type GitHubRelease struct {
 
 // GetLatestVersion gets the latest version of GitHub Actions
 func (h *GitHubActionsHandler) GetLatestVersion(ctx context.Context, args map[string]interface{}) (*mcp.CallToolResult, error) {
-	h.logger.Info("Getting latest GitHub Actions versions")
+	h.logger.Debug("Getting latest GitHub Actions versions")
 
 	// Parse actions
 	actionsRaw, ok := args["actions"]

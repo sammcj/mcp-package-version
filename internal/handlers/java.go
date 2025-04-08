@@ -98,7 +98,7 @@ func (h *JavaHandler) getLatestVersion(groupID, artifactID string) (string, erro
 
 // GetLatestVersionFromMaven gets the latest version of Java packages from Maven
 func (h *JavaHandler) GetLatestVersionFromMaven(ctx context.Context, args map[string]interface{}) (*mcp.CallToolResult, error) {
-	h.logger.Info("Getting latest Maven package versions")
+	h.logger.Debug("Getting latest Maven package versions")
 
 	// Parse dependencies
 	depsRaw, ok := args["dependencies"]
@@ -186,7 +186,7 @@ func (h *JavaHandler) GetLatestVersionFromMaven(ctx context.Context, args map[st
 
 // GetLatestVersionFromGradle gets the latest version of Java packages from Gradle
 func (h *JavaHandler) GetLatestVersionFromGradle(ctx context.Context, args map[string]interface{}) (*mcp.CallToolResult, error) {
-	h.logger.Info("Getting latest Gradle package versions")
+	h.logger.Debug("Getting latest Gradle package versions")
 
 	// Parse dependencies
 	depsRaw, ok := args["dependencies"]
