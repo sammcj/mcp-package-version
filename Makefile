@@ -82,6 +82,11 @@ release:
 	git tag -a v$(VERSION) -m "Release v$(VERSION)"
 	git push origin v$(VERSION)
 
+# Bump version (similar to standard-version in JS)
+.PHONY: bump-version
+bump-version:
+	npx -y standard-version --skip.tag && git add . && git commit -m "chore: bump version" && git push
+
 # Help target
 .PHONY: help
 help:
@@ -99,4 +104,5 @@ help:
 	@echo "  docker-build : Build Docker image"
 	@echo "  docker-run   : Run Docker container with SSE transport"
 	@echo "  release      : Create a new release (requires VERSION=x.y.z)"
+	@echo "  bump-version : Automatically bump version, update CHANGELOG.md and push changes"
 	@echo "  help         : Show this help message"
