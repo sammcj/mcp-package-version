@@ -26,6 +26,10 @@ This server helps LLMs ensure they're recommending up-to-date package versions w
 
 ## Installation
 
+Requirements:
+
+- A modern go version installed (See [Go Installation](https://go.dev/doc/install))
+
 ```bash
 go install github.com/sammcj/mcp-package-version/v2@HEAD
 ```
