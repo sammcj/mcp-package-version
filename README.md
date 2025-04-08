@@ -1,5 +1,7 @@
 # Package Version MCP Server
 
+**NOTE: As of version 2.0.0, this MCP server will be rewritten in Go, once released please visit https://github.com/sammcj/mcp-package-version for information on the updated command for your MCP client**
+
 [![smithery badge](https://smithery.ai/badge/mcp-package-version)](https://smithery.ai/server/mcp-package-version)
 
 An MCP server that provides tools for checking latest stable package versions from multiple package registries:

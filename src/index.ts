@@ -517,6 +517,7 @@ class PackageVersionServer {
     const transport = new StdioServerTransport()
     await this.server.connect(transport)
     console.error('Package Version MCP server running on stdio')
+    console.error('\u001b[33m**NOTE: As of version 2.0.0, this MCP server will be rewritten in Go, once released please visit https://github.com/sammcj/mcp-package-version for information on the updated command for your MCP client**\u001b[0m')
   }
 }
 
