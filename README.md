@@ -50,23 +50,39 @@ Assuming you've installed the binary with `go install github.com/sammcj/mcp-pack
 
 ### Other Installation Methods
 
-Using go run:
+Using `go install` (Recommended for MCP Client Setup):
+
+The simplest way to use this server with an MCP client is to install it first:
+
+```bash
+# Install the latest released version
+go install github.com/sammcj/mcp-package-version/v2@latest
+```
+
+This command downloads, compiles, and installs the `mcp-package-version` binary to your `$GOPATH/bin` or `$GOBIN` directory. Ensure this directory is in your system's PATH.
+
+Then, configure your MCP client to use the installed binary name directly:
 
 ```json
 {
   "mcpServers": {
     "package-version": {
-        "command": "go run github.com/sammcj/mcp-package-version/v2@HEAD",
-      }
+      "command": "mcp-package-version"
+    }
   }
 }
 ```
 
-Installing a specific version:
+Note: If your `$GOPATH/bin` is not in your PATH, you can specify the full path to the binary in the `command` field, e.g. `/Users/sam/go/bin/mcp-package-version`.
+
+*(Using `go run github.com/...` directly in the `command` field is **not supported** and will likely cause `ENOENT` errors.)*
+
+You can also install a specific version, but remember to keep it up to date to get the latest features and fixes:
 
 ```bash
-go install github.com/sammcj/mcp-package-version/v2@v2.0.4
+go install github.com/sammcj/mcp-package-version/v2@v2.0.5
 ```
+*(Replace `v2.0.5` with the desired version tag)*
 
 > **Note:** The module path includes `/v2` suffix for v2.x.x versions according to Go's module versioning rules.
 
