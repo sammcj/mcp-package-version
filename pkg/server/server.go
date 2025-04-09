@@ -104,6 +104,8 @@ func (s *PackageVersionServer) Name() string {
 func (s *PackageVersionServer) Capabilities() []mcpserver.ServerOption {
 	return []mcpserver.ServerOption{
 		mcpserver.WithToolCapabilities(true),
+		mcpserver.WithResourceCapabilities(false, false),
+		mcpserver.WithPromptCapabilities(false),
 	}
 }
 
@@ -127,9 +129,31 @@ func (s *PackageVersionServer) Initialize(srv *mcpserver.MCPServer) error {
 	s.registerSwiftTool(srv)
 	s.registerGitHubActionsTool(srv)
 
+	// Register empty resource and prompt handlers to handle resources/list and prompts/list requests
+	s.registerEmptyResourceHandlers(srv)
+	s.registerEmptyPromptHandlers(srv)
+
 	s.logger.Debug("All handlers registered successfully")
 
 	return nil
+}
+
+// registerEmptyResourceHandlers registers empty resource handlers to respond to resources/list requests
+func (s *PackageVersionServer) registerEmptyResourceHandlers(srv *mcpserver.MCPServer) {
+	s.logger.Debug("Registering empty resource handlers")
+
+	// The mcp-go library will automatically handle resources/list requests with an empty list
+	// if no resources are registered, but we need to declare the capability
+	// No need to add any actual resources since we don't have any
+}
+
+// registerEmptyPromptHandlers registers empty prompt handlers to respond to prompts/list requests
+func (s *PackageVersionServer) registerEmptyPromptHandlers(srv *mcpserver.MCPServer) {
+	s.logger.Debug("Registering empty prompt handlers")
+
+	// The mcp-go library will automatically handle prompts/list requests with an empty list
+	// if no prompts are registered, but we need to declare the capability
+	// No need to add any actual prompts since we don't have any
 }
 
 // Start starts the MCP server with the specified transport
