@@ -27,7 +27,7 @@ func TestToolSchemaValidation(t *testing.T) {
 
 	// Initialize the server, which registers all tools
 	err := s.Initialize(srv)
-	assert.NoError(t, err, "Server initialization should not fail")
+	assert.NoError(t, err, "Server initialisation should not fail")
 	*/
 }
 
@@ -78,6 +78,53 @@ func validateToolInputSchema(t *testing.T, tool mcp.Tool) {
 	}
 }
 
+// TestDirectToolValidation directly tests the tool schema validation function
+// with some sample tool definitions to ensure it works correctly
+func TestDirectToolValidation(t *testing.T) {
+	// Create some sample tools to test the validation function
+	tools := []struct {
+		name string
+		tool mcp.Tool
+	}{
+		{
+			"DockerTool",
+			mcp.NewTool("check_docker_tags",
+				mcp.WithDescription("Check available tags for Docker container images"),
+				mcp.WithString("image",
+					mcp.Required(),
+					mcp.Description("Docker image name"),
+				),
+				mcp.WithString("registry",
+					mcp.Required(),
+					mcp.Description("Registry to fetch tags from"),
+				),
+				mcp.WithArray("filterTags",
+					mcp.Description("Array of regex patterns to filter tags"),
+					mcp.Items(map[string]interface{}{"type": "string"}),
+				),
+			),
+		},
+		{
+			"PythonTool",
+			mcp.NewTool("check_python_versions",
+				mcp.WithDescription("Check latest stable versions for Python packages"),
+				mcp.WithArray("requirements",
+					mcp.Required(),
+					mcp.Description("Array of requirements from requirements.txt"),
+					mcp.Items(map[string]interface{}{"type": "string"}),
+				),
+			),
+		},
+	}
+
+	// Test each tool's schema for validity
+	for _, tc := range tools {
+		t.Run(tc.name, func(t *testing.T) {
+			validateToolInputSchema(t, tc.tool)
+		})
+	}
+}
+
 // TestAllArrayParameters tests tools with array parameters
 func TestAllArrayParameters(t *testing.T) {
 	// Since we can't access tools directly, we'll test individual handlers
@@ -85,17 +132,17 @@ func TestAllArrayParameters(t *testing.T) {
 	t.Skip("Testing array parameters in individual handler tests instead")
 }
 
-// TestServerInitialization tests proper server initialization using the public constructor
-func TestServerInitialization(t *testing.T) {
+// TestServerInitialisation tests proper server initialisation using the public constructor
+func TestServerInitialisation(t *testing.T) {
 	// Create a new server instance using the public constructor
 	s := server.NewPackageVersionServer("test", "test", "test")
 
 	// Create a new MCP server
 	srv := mcpserver.NewMCPServer("test-server", "Test Server")
 
-	// Initialize the server, which registers all tools
+	// Initialise the server, which registers all tools
 	err := s.Initialize(srv)
-	assert.NoError(t, err, "Server initialization should not fail")
+	assert.NoError(t, err, "Server initialisation should not fail")
 }
 
 // TestServerCapabilities tests that the server capabilities are set correctly
