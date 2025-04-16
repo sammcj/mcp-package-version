@@ -1,6 +1,6 @@
 # TESTING
 
-- After completing the tasks the user has requested you MUST run the tests (`make test`) to ensure they all pass.
+**⚠️ CRITICAL TESTING INSTRUCTIONS - After completing the tasks the user has requested you MUST run the tests (`make test`) to ensure they all pass. If any tests fail, you MUST fix them before proceeding. ⚠️**
 
 ---
 
