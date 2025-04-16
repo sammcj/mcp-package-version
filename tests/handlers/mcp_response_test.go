@@ -1,4 +1,4 @@
-package tests
+package handlers_test
 
 import (
 	"encoding/json"
@@ -27,7 +27,7 @@ func TestMCPToolResponse(t *testing.T) {
 	// Define test cases for different handlers
 	testCases := []struct {
 		name      string
-		handler   interface{} // Using interface{} instead of Handler
+		handler   interface{}
 		args      map[string]interface{}
 		assertFn  func(t *testing.T, result *mcp.CallToolResult)
 	}{

@@ -1,4 +1,4 @@
-package handlers
+package handlers_test
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/sammcj/mcp-package-version/v2/internal/handlers"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
@@ -19,7 +20,7 @@ func TestDockerHandler_GetLatestVersion(t *testing.T) {
 	sharedCache := &sync.Map{}
 
 	// Create a handler
-	handler := NewDockerHandler(logger, sharedCache)
+	handler := handlers.NewDockerHandler(logger, sharedCache)
 
 	// Define test cases
 	tests := []struct {
@@ -100,7 +101,7 @@ func TestDockerHandler_GetLatestVersion(t *testing.T) {
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
 
-			 // Only validate tool result format if we have a result
+			// Only validate tool result format if we have a result
 			if result != nil {
 				validateToolResult(t, result)
 			}
@@ -124,7 +125,7 @@ func TestDockerMCPResultFormat(t *testing.T) {
 	sharedCache := &sync.Map{}
 
 	// Create a handler
-	handler := NewDockerHandler(logger, sharedCache)
+	handler := handlers.NewDockerHandler(logger, sharedCache)
 
 	// Create valid arguments
 	args := map[string]interface{}{
@@ -145,7 +146,6 @@ func TestDockerMCPResultFormat(t *testing.T) {
 
 // Helper function to validate tool result format
 func validateToolResult(t *testing.T, result *mcp.CallToolResult) {
-	assert.NotNil(t, result, "Tool result should not be nil")
 	assert.NotNil(t, result.Content, "Tool result content should not be nil")
 
 	// Check if content is empty - don't proceed if it is
@@ -156,13 +156,8 @@ func validateToolResult(t *testing.T, result *mcp.CallToolResult) {
 
 	// Since we're using JSON output, the first content item should be text
 	textContent, ok := result.Content[0].(*mcp.TextContent)
-	if !ok {
-		t.Log("First content item is not text content")
-		return
-	}
-
 	assert.True(t, ok, "First content item should be text content")
-	if textContent != nil {
+	if ok && textContent != nil {
 		assert.NotEmpty(t, textContent.Text, "Text content should not be empty")
 	}
 }
