@@ -102,6 +102,48 @@ func validateToolInputSchema(t *testing.T, tool mcp.Tool) {
 	}
 }
 
+// TestToolSchemaValidation tests that tool schemas conform to MCP specifications
+func TestToolSchemaValidation(t *testing.T) {
+	// Create some sample tools to test the validation function
+	tools := []struct {
+		name string
+		tool mcp.Tool
+	}{
+		{
+			"DockerTool",
+			mcp.NewTool("check_docker_tags",
+				mcp.WithDescription("Check available tags for Docker container images"),
+				mcp.WithString("image",
+					mcp.Required(),
+					mcp.Description("Docker image name"),
+				),
+				mcp.WithArray("filterTags",
+					mcp.Description("Array of regex patterns to filter tags"),
+					mcp.Items(map[string]interface{}{"type": "string"}),
+				),
+			),
+		},
+		{
+			"NPMTool",
+			mcp.NewTool("check_npm_versions",
+				mcp.WithDescription("Check latest versions for NPM packages"),
+				mcp.WithArray("packages",
+					mcp.Required(),
+					mcp.Description("Array of package names to check"),
+					mcp.Items(map[string]interface{}{"type": "string"}),
+				),
+			),
+		},
+	}
+
+	// Test each tool's schema for validity
+	for _, tc := range tools {
+		t.Run(tc.name, func(t *testing.T) {
+			validateToolInputSchema(t, tc.tool)
+		})
+	}
+}
+
 // TestServerCapabilities tests that the server capabilities are set correctly
 func TestServerCapabilities(t *testing.T) {
 	// Create a new server instance

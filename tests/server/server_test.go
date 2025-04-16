@@ -78,10 +78,10 @@ func validateToolInputSchema(t *testing.T, tool mcp.Tool) {
 	}
 }
 
-// TestDirectToolValidation directly tests the tool schema validation function
-// with some sample tool definitions to ensure it works correctly
-func TestDirectToolValidation(t *testing.T) {
-	// Create some sample tools to test the validation function
+// TestToolSchemaDirectValidation directly tests the validateToolInputSchema function
+// with sample tool definitions to ensure schemas conform to MCP specifications
+func TestToolSchemaDirectValidation(t *testing.T) {
+	// Create sample tools with different array parameter configurations
 	tools := []struct {
 		name string
 		tool mcp.Tool
@@ -115,11 +115,27 @@ func TestDirectToolValidation(t *testing.T) {
 				),
 			),
 		},
+		{
+			"NPMTool",
+			mcp.NewTool("check_npm_versions",
+				mcp.WithDescription("Check latest versions for NPM packages"),
+				mcp.WithArray("packages",
+					mcp.Required(),
+					mcp.Description("Array of package names to check"),
+					mcp.Items(map[string]interface{}{"type": "string"}),
+				),
+				mcp.WithArray("excludePatterns",
+					mcp.Description("Regex patterns to exclude certain versions"),
+					mcp.Items(map[string]interface{}{"type": "string"}),
+				),
+			),
+		},
 	}
 
 	// Test each tool's schema for validity
 	for _, tc := range tools {
 		t.Run(tc.name, func(t *testing.T) {
+			// Explicitly call validateToolInputSchema to ensure it's used
 			validateToolInputSchema(t, tc.tool)
 		})
 	}

@@ -1,3 +1,9 @@
+# TESTING
+
+- After completing the tasks the user has requested you MUST run the tests (`make test`) to ensure they all pass.
+
+---
+
 # You MUST use the `new_task` tool: Task Handoff Strategy Guide
 
 **⚠️ CRITICAL INSTRUCTIONS - YOU MUST FOLLOW THESE GUIDELINES ⚠️**
