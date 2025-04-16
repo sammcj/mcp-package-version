@@ -503,6 +503,14 @@ func (s *PackageVersionServer) registerDockerTool(srv *mcpserver.MCPServer) {
 			mcp.Description("Array of regex patterns to filter tags"),
 			mcp.Items(map[string]interface{}{"type": "string"}),
 		),
+		// If the above doesn't work, maybe try a deeper structure like this:
+		// mcp.WithArray("filterTags",
+		// 	 mcp.Description("Array of regex patterns to filter tags"),
+		// 	 mcp.Items(map[string]interface{}{
+		// 			"type": "string",
+		// 			"description": "Regex pattern to filter Docker tags",
+		// 	 }),
+		// ),
 		mcp.WithBoolean("includeDigest",
 			mcp.Description("Include image digest in results"),
 			mcp.DefaultBool(false),
