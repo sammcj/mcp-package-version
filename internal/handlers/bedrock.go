@@ -365,5 +365,5 @@ func (h *BedrockHandler) getLatestClaudeSonnet() (*mcp.CallToolResult, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("Claude Sonnet model not found")
+	return nil, fmt.Errorf("claude sonnet model not found")
 }
