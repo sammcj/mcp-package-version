@@ -18,7 +18,7 @@ func TestServerInitialize(t *testing.T) {
 	logger.SetLevel(logrus.DebugLevel)
 	s := &PackageVersionServer{
 		logger:      logger,
-		SharedCache: &sync.Map{}, // Fixed: using proper sync.Map
+		sharedCache: &sync.Map{}, // Fixed: using lowercase field name as per struct definition
 		Version:     "test",
 		Commit:      "test",
 		BuildDate:   "test",
@@ -42,7 +42,7 @@ func TestDockerToolRegistration(t *testing.T) {
 	logger.SetLevel(logrus.DebugLevel)
 	server := &PackageVersionServer{
 		logger:      logger,
-		SharedCache: &sync.Map{}, // Fixed: using proper sync.Map
+		sharedCache: &sync.Map{}, // Fixed: using lowercase field name as per struct definition
 	}
 
 	srv := mcpserver.NewMCPServer("test-server", "Test Server")
@@ -111,14 +111,6 @@ func TestServerCapabilities(t *testing.T) {
 	capabilities := s.Capabilities()
 
 	// Verify that tools capabilities are enabled
-	found := false
-	for _, cap := range capabilities {
-		// We can't directly check the capability types since we don't have access to those structs
-		// But we know there should be exactly 3 capabilities based on the server implementation
-		if len(capabilities) == 3 {
-			found = true
-			break
-		}
-	}
-	assert.True(t, found, "Server should have correct capabilities set")
+	// Just check the length to avoid unused variable warning
+	assert.Equal(t, 3, len(capabilities), "Server should have exactly 3 capabilities")
 }
