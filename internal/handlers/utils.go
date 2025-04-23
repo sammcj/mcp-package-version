@@ -61,8 +61,9 @@ func MakeRequestWithLogger(client HTTPClient, logger *logrus.Logger, method, url
 	if req.Header.Get("Accept") == "" {
 		req.Header.Set("Accept", "application/json")
 	}
+	// Use a more standard User-Agent
 	if req.Header.Get("User-Agent") == "" {
-		req.Header.Set("User-Agent", "mcp-package-version/1.0.0")
+		req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; Cline-MCP-Client/1.0)")
 	}
 
 	// Send request

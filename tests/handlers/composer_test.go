@@ -115,9 +115,9 @@ func TestComposerHandler_GetLatestVersion(t *testing.T) {
 
 	mockClient := &MockHTTPClient{
 		DoFunc: func(req *http.Request) (*http.Response, error) {
-			// Extract package name from URL
+			// Extract package name from URL using the correct /p2/ path
 			url := req.URL.String()
-			parts := strings.Split(url, "/packages/")
+			parts := strings.Split(url, "/p2/") // Use /p2/ instead of /packages/
 			if len(parts) != 2 {
 				return &http.Response{
 					StatusCode: http.StatusBadRequest,

@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -25,7 +26,20 @@ func (s *PackageVersionServer) registerComposerTool(srv *server.MCPServer) {
 
 	// Add Composer handler
 	srv.AddTool(composerTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		s.logger.WithField("tool", "check_composer_versions").Debug("Received request")
-		return composerHandler.GetLatestVersion(ctx, request.Params.Arguments)
+		s.logger.Info(fmt.Sprintf("Received composer version check request: %+v", request.Params.Arguments))
+
+		result, err := composerHandler.GetLatestVersion(ctx, request.Params.Arguments)
+		if err != nil {
+			s.logger.Error(fmt.Sprintf("Error processing composer version check: %v", err))
+			return nil, err
+		}
+
+		if result == nil {
+			s.logger.Error("Composer handler returned nil result")
+			return nil, fmt.Errorf("handler returned nil result")
+		}
+
+		s.logger.Info(fmt.Sprintf("Composer version check completed: %+v", result))
+		return result, nil
 	})
 }
