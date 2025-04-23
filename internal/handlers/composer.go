@@ -12,7 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// ComposerHandler handles Composer/Laravel package version checking
+// ComposerHandler handles Composer package version checking for PHP packages
 type ComposerHandler struct {
 	client HTTPClient
 	cache  *sync.Map
@@ -54,7 +54,7 @@ var (
 
 // GetLatestVersion gets information about Composer package versions
 func (h *ComposerHandler) GetLatestVersion(ctx context.Context, args map[string]interface{}) (*mcp.CallToolResult, error) {
-	h.logger.Info("Getting Composer package version information")
+	h.logger.Debug("Getting Composer package version information")
 
 	// Parse dependencies
 	dependenciesRaw, ok := args["dependencies"].(map[string]interface{})
@@ -63,54 +63,83 @@ func (h *ComposerHandler) GetLatestVersion(ctx context.Context, args map[string]
 		return nil, fmt.Errorf("missing required parameter: dependencies")
 	}
 
-	h.logger.WithField("dependencies", fmt.Sprintf("%+v", dependenciesRaw)).Info("Parsed dependencies")
+	// Convert dependencies to string map
+	dependencies := make(map[string]string)
+	for pkg, ver := range dependenciesRaw {
+		if verStr, ok := ver.(string); ok {
+			dependencies[pkg] = verStr
+		}
+	}
 
-	// For demonstration purposes, return hardcoded results
+	// Parse constraints
+	var constraints VersionConstraints
+	if constraintsRaw, ok := args["constraints"].(map[string]interface{}); ok {
+		constraints = make(VersionConstraints)
+		for pkg, constraint := range constraintsRaw {
+			if c, ok := constraint.(map[string]interface{}); ok {
+				var vc VersionConstraint
+				if exclude, ok := c["excludePackage"].(bool); ok {
+					vc.ExcludePackage = exclude
+				}
+				if major, ok := c["majorVersion"].(float64); ok {
+					majorInt := int(major)
+					vc.MajorVersion = &majorInt
+				}
+				constraints[pkg] = vc
+			}
+		}
+	}
+
 	var results []PackageVersion
 
 	// Process each dependency
-	for packageName, currentVersion := range dependenciesRaw {
-		h.logger.Info(fmt.Sprintf("Processing package: %s", packageName))
+	for packageName, currentVersion := range dependencies {
+		h.logger.WithFields(logrus.Fields{
+			"package": packageName,
+			"version": currentVersion,
+		}).Debug("Checking package")
 
-		// Convert current version to string if needed
-		var currentVersionStr string
-		if verStr, ok := currentVersion.(string); ok {
-			currentVersionStr = verStr
-		} else {
-			currentVersionStr = fmt.Sprintf("%v", currentVersion)
-		}
-
-		// Clean the version string
-		cleanCurrentVersion := strings.TrimLeft(currentVersionStr, "^~>=<!")
-
-		// Check if it's a Laravel package
-		if strings.HasPrefix(packageName, "laravel/") ||
-			strings.HasPrefix(packageName, "illuminate/") ||
-			strings.HasPrefix(packageName, "spatie/") ||
-			strings.HasPrefix(packageName, "filament/") {
-
-			// Get hardcoded version if available
-			var latestVersion string
-			if version, ok := hardcodedVersions[packageName]; ok {
-				latestVersion = version
-			} else {
-				// Use a default version if not found
-				latestVersion = "v10.0.0"
-			}
-
-			// Add to results
+		// Check if package should be excluded
+		if constraint, exists := constraints[packageName]; exists && constraint.ExcludePackage {
 			results = append(results, PackageVersion{
-				Name:           packageName,
-				CurrentVersion: &cleanCurrentVersion,
-				LatestVersion:  latestVersion,
-				Registry:       "packagist",
+				Name:       packageName,
+				Skipped:    true,
+				SkipReason: "Package excluded by constraints",
 			})
-
-			h.logger.Info(fmt.Sprintf("Added Laravel package %s with version %s", packageName, latestVersion))
-		} else {
-			// Skip non-Laravel packages
-			h.logger.Info(fmt.Sprintf("Skipping non-Laravel package: %s", packageName))
+			continue
 		}
+
+		parts := strings.Split(packageName, "/")
+		if len(parts) != 2 {
+			results = append(results, PackageVersion{
+				Name:       packageName,
+				Skipped:    true,
+				SkipReason: "Invalid package name format",
+			})
+			continue
+		}
+
+		vendor, pkg := parts[0], parts[1]
+		latestVersion, err := h.fetchLatestVersion(vendor, pkg)
+
+		if err != nil {
+			results = append(results, PackageVersion{
+				Name:       packageName,
+				Skipped:    true,
+				SkipReason: fmt.Sprintf("Failed to fetch version info: %v", err),
+			})
+			continue
+		}
+
+		// Remove version constraint operators from current version
+		cleanCurrentVersion := strings.TrimLeft(currentVersion, "^~>=<!")
+
+		results = append(results, PackageVersion{
+			Name:           packageName,
+			CurrentVersion: &cleanCurrentVersion,
+			LatestVersion:  latestVersion,
+			Registry:       "packagist",
+		})
 	}
 
 	// Convert results to JSON
@@ -207,104 +236,89 @@ type PackagistPackageResponse struct {
 	} `json:"package"`
 }
 
-// Hardcoded versions for common Laravel packages
-var hardcodedVersions = map[string]string{
-	"laravel/framework":            "v10.46.0",
-	"laravel/sanctum":              "v3.3.3",
-	"laravel/tinker":               "v2.9.0",
-	"laravel/sail":                 "v1.27.3",
-	"laravel/breeze":               "v1.28.1",
-	"laravel/jetstream":            "v4.3.3",
-	"laravel/fortify":              "v1.20.0",
-	"laravel/ui":                   "v4.4.0",
-	"laravel/horizon":              "v5.23.1",
-	"laravel/telescope":            "v4.17.2",
-	"laravel/socialite":            "v5.11.0",
-	"laravel/pint":                 "v1.13.7",
-	"laravel/prompts":              "v0.1.15",
-	"laravel/serializable-closure": "v1.3.3",
-	"illuminate/support":           "v10.46.0",
-	"illuminate/database":          "v10.46.0",
-	"illuminate/http":              "v10.46.0",
-	"illuminate/console":           "v10.46.0",
-	"illuminate/auth":              "v10.46.0",
-	"illuminate/events":            "v10.46.0",
-	"illuminate/validation":        "v10.46.0",
-	"illuminate/filesystem":        "v10.46.0",
-	"illuminate/view":              "v10.46.0",
-	"illuminate/cache":             "v10.46.0",
-	"illuminate/queue":             "v10.46.0",
-	"illuminate/mail":              "v10.46.0",
-	"illuminate/routing":           "v10.46.0",
-	"illuminate/session":           "v10.46.0",
-	"illuminate/log":               "v10.46.0",
-	"illuminate/config":            "v10.46.0",
-	"illuminate/container":         "v10.46.0",
-	"illuminate/contracts":         "v10.46.0",
-	"illuminate/pipeline":          "v10.46.0",
-	"illuminate/translation":       "v10.46.0",
-	"illuminate/broadcasting":      "v10.46.0",
-	"illuminate/notifications":     "v10.46.0",
-	"illuminate/pagination":        "v10.46.0",
-	"illuminate/hashing":           "v10.46.0",
-	"illuminate/encryption":        "v10.46.0",
-	"illuminate/cookie":            "v10.46.0",
-	"illuminate/redis":             "v10.46.0",
-	"spatie/laravel-permission":    "v6.3.0",
-	"filament/forms":               "v3.2.2",
-	"filament/tables":              "v3.2.2",
-	"filament/filament":            "v3.2.2",
-}
-
-// getLatestVersion retrieves the latest version of a package from Packagist
-func (h *ComposerHandler) getLatestVersion(vendor, package_ string) (string, error) {
-	packageName := fmt.Sprintf("%s/%s", vendor, package_)
-	h.logger.Info(fmt.Sprintf("getLatestVersion called for %s", packageName))
-
+// fetchLatestVersion retrieves the latest version of a package from Packagist
+func (h *ComposerHandler) fetchLatestVersion(vendor, package_ string) (string, error) {
 	// Check cache first
 	cacheKey := fmt.Sprintf("packagist:%s/%s", vendor, package_)
 	if cachedVersion, ok := h.cache.Load(cacheKey); ok {
-		h.logger.Info(fmt.Sprintf("Using cached version for %s: %v", packageName, cachedVersion))
+		h.logger.WithField("package", fmt.Sprintf("%s/%s", vendor, package_)).Debug("Using cached version")
 		return cachedVersion.(string), nil
 	}
 
-	// Check if we have a hardcoded version for this package
-	h.logger.Info(fmt.Sprintf("Checking hardcoded versions for %s", packageName))
-	if version, ok := hardcodedVersions[packageName]; ok {
-		h.logger.Info(fmt.Sprintf("Found hardcoded version for %s: %s", packageName, version))
-
-		// Cache the result
-		h.cache.Store(cacheKey, version)
-
-		return version, nil
+	// Try different API endpoints
+	endpoints := []string{
+		fmt.Sprintf(packagistPackageURL, vendor, package_),
+		fmt.Sprintf(packagistAPIURL, vendor, package_),
+		fmt.Sprintf(packagistMetaURL, vendor, package_),
 	}
 
-	h.logger.Info(fmt.Sprintf("No hardcoded version found for %s in map of %d entries",
-		packageName, len(hardcodedVersions)))
+	var body []byte
+	var err error
+	var succeeded bool
 
-	// If we don't have a hardcoded version, try the API
-	h.logger.Info(fmt.Sprintf("No hardcoded version found for %s, trying API", packageName))
+	for _, url := range endpoints {
+		h.logger.WithFields(logrus.Fields{
+			"package": fmt.Sprintf("%s/%s", vendor, package_),
+			"url":     url,
+		}).Debug("Trying API endpoint")
 
-	// First try the direct package URL
-	packageURL := fmt.Sprintf(packagistPackageURL, vendor, package_)
-	h.logger.WithFields(logrus.Fields{
-		"package": packageName,
-		"url":     packageURL,
-	}).Debug("Fetching Packagist package info")
-
-	// Try a direct API call to the Packagist website
-	h.logger.Info(fmt.Sprintf("Trying direct API call to %s", packageURL))
-	body, err := MakeRequestWithLogger(h.client, h.logger, "GET", packageURL, nil)
-	if err != nil {
-		h.logger.WithError(err).WithField("url", packageURL).Info("Failed to fetch package info directly")
-		return "", fmt.Errorf("failed to fetch package info: %v", err)
+		body, err = MakeRequestWithLogger(h.client, h.logger, "GET", url, nil)
+		if err == nil {
+			succeeded = true
+			break
+		}
+		h.logger.WithError(err).WithField("url", url).Debug("Failed to fetch from endpoint, trying next")
 	}
 
-	h.logger.WithField("body", string(body[:min(len(body), 200)])).Debug("Received package API response")
+	if !succeeded {
+		// If all direct endpoints fail, try the search API
+		searchURL := fmt.Sprintf(packagistSearchURL, fmt.Sprintf("%s/%s", vendor, package_))
+		h.logger.WithField("url", searchURL).Debug("Trying search API")
 
+		searchBody, searchErr := MakeRequestWithLogger(h.client, h.logger, "GET", searchURL, nil)
+		if searchErr != nil {
+			h.logger.WithError(searchErr).WithField("url", searchURL).Error("Failed to search for package")
+			return "", fmt.Errorf("failed to search for package: %v", searchErr)
+		}
+
+		var searchResponse PackagistSearchResponse
+		if err := json.Unmarshal(searchBody, &searchResponse); err != nil {
+			h.logger.WithError(err).Error("Failed to parse search response")
+			return "", fmt.Errorf("failed to parse search response: %v", err)
+		}
+
+		if searchResponse.Total == 0 || len(searchResponse.Results) == 0 {
+			h.logger.Error("No packages found in search results")
+			return "", fmt.Errorf("no packages found for %s/%s", vendor, package_)
+		}
+
+		// Find the exact package match
+		var exactMatch bool
+		for _, result := range searchResponse.Results {
+			if strings.EqualFold(result.Name, fmt.Sprintf("%s/%s", vendor, package_)) {
+				exactMatch = true
+				break
+			}
+		}
+
+		if !exactMatch {
+			h.logger.WithField("results", fmt.Sprintf("%+v", searchResponse.Results)).Error("No exact match found in search results")
+			return "", fmt.Errorf("no exact match found for %s/%s", vendor, package_)
+		}
+
+		// Try the package URL again with the confirmed package name
+		url := fmt.Sprintf(packagistPackageURL, vendor, package_)
+		body, err = MakeRequestWithLogger(h.client, h.logger, "GET", url, nil)
+		if err != nil {
+			h.logger.WithError(err).Error("Failed to fetch package info after confirming existence")
+			return "", fmt.Errorf("failed to fetch package info: %v", err)
+		}
+	}
+
+	// Parse the response
 	var packageResponse PackagistPackageResponse
 	if err := json.Unmarshal(body, &packageResponse); err != nil {
-		h.logger.WithError(err).WithField("body", string(body[:min(len(body), 200)])).Error("Failed to parse package info")
+		h.logger.WithError(err).Error("Failed to parse package info")
 		return "", fmt.Errorf("failed to parse package info: %v", err)
 	}
 
@@ -331,76 +345,4 @@ func (h *ComposerHandler) getLatestVersion(vendor, package_ string) (string, err
 	h.cache.Store(cacheKey, latestVersion)
 
 	return latestVersion, nil
-}
-
-// checkComposerVersions checks the latest versions for Laravel/Composer packages
-func (h *ComposerHandler) checkComposerVersions(dependencies map[string]string, constraints VersionConstraints) []PackageVersion {
-	var results []PackageVersion
-
-	h.logger.WithField("dependencies", fmt.Sprintf("%+v", dependencies)).Info("Processing dependencies")
-	h.logger.WithField("hardcoded_versions", fmt.Sprintf("%+v", hardcodedVersions)).Info("Available hardcoded versions")
-
-	for packageName, currentVersion := range dependencies {
-		h.logger.WithFields(logrus.Fields{
-			"package": packageName,
-			"version": currentVersion,
-		}).Info("Checking package")
-
-		// Check if it's a Laravel package
-		isLaravel := IsLaravelPackage(packageName)
-		h.logger.WithFields(logrus.Fields{
-			"package":   packageName,
-			"isLaravel": isLaravel,
-		}).Info("Laravel package check")
-
-		// Skip if it's not a Laravel package
-		if !isLaravel {
-			h.logger.WithField("package", packageName).Info("Skipping non-Laravel package")
-			continue
-		}
-
-		// Check if package should be excluded
-		if constraint, exists := constraints[packageName]; exists && constraint.ExcludePackage {
-			results = append(results, PackageVersion{
-				Name:       packageName,
-				Skipped:    true,
-				SkipReason: "Package excluded by constraints",
-			})
-			continue
-		}
-
-		parts := strings.Split(packageName, "/")
-		if len(parts) != 2 {
-			results = append(results, PackageVersion{
-				Name:       packageName,
-				Skipped:    true,
-				SkipReason: "Invalid package name format",
-			})
-			continue
-		}
-
-		vendor, pkg := parts[0], parts[1]
-		latestVersion, err := h.getLatestVersion(vendor, pkg)
-
-		if err != nil {
-			results = append(results, PackageVersion{
-				Name:       packageName,
-				Skipped:    true,
-				SkipReason: fmt.Sprintf("Failed to fetch version info: %v", err),
-			})
-			continue
-		}
-
-		// Remove version constraint operators from current version
-		cleanCurrentVersion := strings.TrimLeft(currentVersion, "^~>=<!")
-
-		results = append(results, PackageVersion{
-			Name:           packageName,
-			CurrentVersion: &cleanCurrentVersion,
-			LatestVersion:  latestVersion,
-			Registry:       "packagist",
-		})
-	}
-
-	return results
 }

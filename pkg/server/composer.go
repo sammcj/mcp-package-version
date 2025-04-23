@@ -9,12 +9,12 @@ import (
 	"github.com/sammcj/mcp-package-version/v2/internal/handlers"
 )
 
-// registerComposerTool registers the Composer/Laravel package version checking tool
+// registerComposerTool registers the Composer package version checking tool
 func (s *PackageVersionServer) registerComposerTool(srv *server.MCPServer) {
 	composerHandler := handlers.NewComposerHandler(s.logger, s.sharedCache)
 
 	composerTool := mcp.NewTool("check_composer_versions",
-		mcp.WithDescription("Check latest stable versions for Laravel/Composer packages"),
+		mcp.WithDescription("Check latest stable versions for PHP packages from Packagist"),
 		mcp.WithObject("dependencies",
 			mcp.Required(),
 			mcp.Description("Dependencies object from composer.json"),

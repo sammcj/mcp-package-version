@@ -189,14 +189,14 @@ func validateComposerToolResult(t *testing.T, result *mcp.CallToolResult) {
 	err := json.Unmarshal([]byte(textContent.Text), &versions)
 	assert.NoError(t, err, "Should be able to unmarshal JSON result")
 
-	// Test the number of results (should only include Laravel packages)
-	laravelPackages := 0
+	// Test the number of results (should include all valid PHP packages)
+	validPackages := 0
 	for _, version := range versions {
 		if !version.Skipped {
-			laravelPackages++
+			validPackages++
 		}
 	}
-	assert.Greater(t, laravelPackages, 0, "Should have found some Laravel packages")
+	assert.Greater(t, validPackages, 0, "Should have found some valid PHP packages")
 
 	// Test excluded package
 	for _, version := range versions {
@@ -214,7 +214,7 @@ func validateComposerToolResult(t *testing.T, result *mcp.CallToolResult) {
 		}
 	}
 
-	// Test non-Laravel package (should not be in results)
+	// Test non-Laravel package (should now be in results since we process all PHP packages)
 	found := false
 	for _, result := range versions {
 		if result.Name == "vendor/non-laravel-package" {
@@ -222,5 +222,5 @@ func validateComposerToolResult(t *testing.T, result *mcp.CallToolResult) {
 			break
 		}
 	}
-	assert.False(t, found, "Non-Laravel package should not be in results")
+	assert.True(t, found, "Non-Laravel package should be in results")
 }
