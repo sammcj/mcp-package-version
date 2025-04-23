@@ -184,7 +184,7 @@ jobs:
 
             ## Installation
 
-            Download the binary for your platform and run it.
+            See [Installation](https://github.com/sammcj/mcp-package-version#installation)
           files: |
             bin/mcp-package-version
           draft: false

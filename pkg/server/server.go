@@ -128,6 +128,7 @@ func (s *PackageVersionServer) Initialize(srv *mcpserver.MCPServer) error {
 	s.registerDockerTool(srv)
 	s.registerSwiftTool(srv)
 	s.registerGitHubActionsTool(srv)
+	s.registerComposerTool(srv)
 
 	// Register empty resource and prompt handlers to handle resources/list and prompts/list requests
 	s.registerEmptyResourceHandlers(srv)

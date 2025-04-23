@@ -12,8 +12,8 @@ type PackageVersion struct {
 
 // VersionConstraint represents constraints for package version updates
 type VersionConstraint struct {
-	MajorVersion   *int  `json:"majorVersion,omitempty"`
-	ExcludePackage bool  `json:"excludePackage,omitempty"`
+	MajorVersion   *int `json:"majorVersion,omitempty"`
+	ExcludePackage bool `json:"excludePackage,omitempty"`
 }
 
 // VersionConstraints maps package names to their constraints
@@ -124,4 +124,21 @@ type GitHubActionVersion struct {
 	LatestVersion  string  `json:"latestVersion"`
 	PublishedAt    *string `json:"publishedAt,omitempty"`
 	URL            *string `json:"url,omitempty"`
+}
+
+// ComposerDependency represents a dependency in a composer.json file
+type ComposerDependency struct {
+	Name    string `json:"name"`
+	Version string `json:"version,omitempty"`
+	Require string `json:"require,omitempty"`
+	Type    string `json:"type,omitempty"`
+}
+
+// ComposerPackage represents the structure of a composer.json file
+type ComposerPackage struct {
+	Name        string            `json:"name,omitempty"`
+	Description string            `json:"description,omitempty"`
+	Type        string            `json:"type,omitempty"`
+	Require     map[string]string `json:"require,omitempty"`
+	RequireDev  map[string]string `json:"require-dev,omitempty"`
 }
