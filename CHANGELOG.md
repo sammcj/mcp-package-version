@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.0.19](https://github.com/sammcj/mcp-package-version/compare/v2.0.18...v2.0.19) (2025-04-24)
+
+
+### Bug Fixes
+
+* **descriptions:** improve tool descriptions ([dc3326f](https://github.com/sammcj/mcp-package-version/commit/dc3326f1d87ac939cd7bc730ff2991f71ced1a46))
+
 ### [2.0.16](https://github.com/sammcj/mcp-package-version/compare/v2.0.15...v2.0.16) (2025-04-16)
 
 ### [2.0.14](https://github.com/sammcj/mcp-package-version/compare/v2.0.13...v2.0.14) (2025-04-16)
