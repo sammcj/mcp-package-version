@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestServerInitialize tests that the server initializes without errors
-func TestServerInitialize(t *testing.T) {
+// TestServerInitialise tests that the server initializes without errors
+func TestServerInitialise(t *testing.T) {
 	// Create a new server instance for testing
 	logger := logrus.New()
 	logger.SetLevel(logrus.DebugLevel)
@@ -27,11 +27,11 @@ func TestServerInitialize(t *testing.T) {
 	// Create a new MCP server
 	srv := mcpserver.NewMCPServer("test-server", "Test Server")
 
-	// Initialize the server, which registers all tools
+	// Initialise the server, which registers all tools
 	err := s.Initialize(srv)
-	assert.NoError(t, err, "Server initialization should not fail")
+	assert.NoError(t, err, "Server initialisation should not fail")
 
-	// Since we can't access tools directly with GetTools(), we'll just test server initialization
+	// Since we can't access tools directly with GetTools(), we'll just test server initialisation
 	// is successful, which implicitly means tools were registered correctly
 }
 
@@ -115,7 +115,7 @@ func TestToolSchemaValidation(t *testing.T) {
 				mcp.WithDescription("Check available tags for Docker container images"),
 				mcp.WithString("image",
 					mcp.Required(),
-					mcp.Description("Docker image name"),
+					mcp.Description("Required: Docker image name"),
 				),
 				mcp.WithArray("filterTags",
 					mcp.Description("Array of regex patterns to filter tags"),
@@ -129,7 +129,7 @@ func TestToolSchemaValidation(t *testing.T) {
 				mcp.WithDescription("Check latest versions for NPM packages"),
 				mcp.WithArray("packages",
 					mcp.Required(),
-					mcp.Description("Array of package names to check"),
+					mcp.Description("Required: Array of package names to check"),
 					mcp.Items(map[string]interface{}{"type": "string"}),
 				),
 			),

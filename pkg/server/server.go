@@ -316,7 +316,7 @@ func (s *PackageVersionServer) registerNpmTool(srv *mcpserver.MCPServer) {
 		mcp.WithDescription("Check latest stable versions for npm packages"),
 		mcp.WithObject("dependencies",
 			mcp.Required(),
-			mcp.Description("Dependencies object from package.json"),
+			mcp.Description("Required: Dependencies object from package.json (e.g., { \"dependencies\": { \"express\": \"^4.17.1\" } })"),
 		),
 		mcp.WithObject("constraints",
 			mcp.Description("Optional constraints for specific packages"),
@@ -337,10 +337,10 @@ func (s *PackageVersionServer) registerPythonTools(srv *mcpserver.MCPServer) {
 
 	// Tool for requirements.txt
 	pythonTool := mcp.NewTool("check_python_versions",
-		mcp.WithDescription("Check latest stable versions for Python packages"),
+		mcp.WithDescription("Get the current, up to date Python package versions to use when adding or updating Python packages for requirements.txt"),
 		mcp.WithArray("requirements",
 			mcp.Required(),
-			mcp.Description("Array of requirements from requirements.txt"),
+			mcp.Description("Required: Array of one or more requirements from requirements.txt"),
 			mcp.Items(map[string]interface{}{"type": "string"}),
 		),
 	)
@@ -353,10 +353,10 @@ func (s *PackageVersionServer) registerPythonTools(srv *mcpserver.MCPServer) {
 
 	// Tool for pyproject.toml
 	pyprojectTool := mcp.NewTool("check_pyproject_versions",
-		mcp.WithDescription("Check latest stable versions for Python packages in pyproject.toml"),
+		mcp.WithDescription("Get the current, up to date Python package versions to use when adding or updating Python packages for pyproject.toml"),
 		mcp.WithObject("dependencies",
 			mcp.Required(),
-			mcp.Description("Dependencies object from pyproject.toml"),
+			mcp.Description("Required: Dependencies object from pyproject.toml"),
 		),
 	)
 
@@ -390,7 +390,7 @@ func (s *PackageVersionServer) registerJavaTools(srv *mcpserver.MCPServer) {
 
 	// Tool for Gradle
 	gradleTool := mcp.NewTool("check_gradle_versions",
-		mcp.WithDescription("Check latest stable versions for Java packages in build.gradle"),
+		mcp.WithDescription("Get latest stable versions for Java packages in build.gradle"),
 		mcp.WithArray("dependencies",
 			mcp.Required(),
 			mcp.Description("Array of Gradle dependencies"),
@@ -411,10 +411,10 @@ func (s *PackageVersionServer) registerGoTool(srv *mcpserver.MCPServer) {
 	goHandler := handlers.NewGoHandler(s.logger, s.sharedCache)
 
 	goTool := mcp.NewTool("check_go_versions",
-		mcp.WithDescription("Check latest stable versions for Go packages in go.mod"),
+		mcp.WithDescription("Get the current, up to date package versions to use when adding Go packages or updating go.mod"),
 		mcp.WithObject("dependencies",
 			mcp.Required(),
-			mcp.Description("Dependencies from go.mod"),
+			mcp.Description("Required: Dependencies from go.mod"),
 		),
 	)
 
@@ -463,13 +463,13 @@ func (s *PackageVersionServer) registerBedrockTools(srv *mcpserver.MCPServer) {
 
 	// Tool for getting the latest Claude Sonnet model
 	sonnetTool := mcp.NewTool("get_latest_bedrock_model",
-		mcp.WithDescription("Get the latest Claude Sonnet model from Amazon Bedrock (best for coding tasks)"),
+		mcp.WithDescription("Return the latest Claude Sonnet model available on Amazon Bedrock (best for coding tasks)"),
 	)
 
 	// Add Bedrock Claude Sonnet handler
 	srv.AddTool(sonnetTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		s.logger.WithField("tool", "get_latest_bedrock_model").Debug("Received request")
-		// Set the action to get_latest_claude_sonnet to use the specialized method
+		// Set the action to get_latest_claude_sonnet to use the specialised method
 		return bedrockHandler.GetLatestVersion(ctx, map[string]interface{}{
 			"action": "get_latest_claude_sonnet",
 		})
@@ -482,10 +482,10 @@ func (s *PackageVersionServer) registerDockerTool(srv *mcpserver.MCPServer) {
 	dockerHandler := handlers.NewDockerHandler(s.logger, s.sharedCache)
 
 	dockerTool := mcp.NewTool("check_docker_tags",
-		mcp.WithDescription("Check available tags for Docker container images from Docker Hub, GitHub Container Registry, or custom registries"),
+		mcp.WithDescription("Get the latest, up to date tags for Docker container images from Docker Hub, GitHub Container Registry, or custom registries for use when writing Dockerfiles or docker-compose files"),
 		mcp.WithString("image",
 			mcp.Required(),
-			mcp.Description("Docker image name (e.g., \"nginx\", \"ubuntu\", \"ghcr.io/owner/repo\")"),
+			mcp.Description("Required: Docker image name (e.g., \"nginx\", \"ubuntu\", \"ghcr.io/owner/repo\")"),
 		),
 		mcp.WithString("registry",
 			mcp.Description("Registry to check (dockerhub, ghcr, or custom)"),
@@ -537,7 +537,7 @@ func (s *PackageVersionServer) registerSwiftTool(srv *mcpserver.MCPServer) {
 		mcp.WithDescription("Check latest stable versions for Swift packages in Package.swift"),
 		mcp.WithArray("dependencies",
 			mcp.Required(),
-			mcp.Description("Array of Swift package dependencies"),
+			mcp.Description("Required: Array of Swift package dependencies"),
 			mcp.Items(map[string]interface{}{"type": "object"}),
 		),
 		mcp.WithObject("constraints",
@@ -558,10 +558,10 @@ func (s *PackageVersionServer) registerGitHubActionsTool(srv *mcpserver.MCPServe
 	githubActionsHandler := handlers.NewGitHubActionsHandler(s.logger, s.sharedCache)
 
 	githubActionsTool := mcp.NewTool("check_github_actions",
-		mcp.WithDescription("Check latest versions for GitHub Actions"),
+		mcp.WithDescription("Get the current, up to date GitHub Actions versions to use when adding or updating GitHub Actions"),
 		mcp.WithArray("actions",
 			mcp.Required(),
-			mcp.Description("Array of GitHub Actions to check"),
+			mcp.Description("Required: Array of GitHub Actions to check"),
 			mcp.Items(map[string]interface{}{"type": "object"}),
 		),
 		mcp.WithBoolean("includeDetails",
