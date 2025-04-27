@@ -241,29 +241,23 @@ func (s *PackageVersionServer) Start(transport, port, baseURL string) error {
 		// Add SSE server options
 		sseOptions := []mcpserver.SSEOption{
 			mcpserver.WithBaseURL(sseBaseURL),
-			// Try adding a path option if available
-			// This is a guess since we don't have direct access to the mcp-go package source
-			// The SSE server might expect a specific path for the SSE endpoint
+			// Add any other relevant options here if discovered
 		}
+		s.logger.WithField("sse_options", fmt.Sprintf("%+v", sseOptions)).Debug("Configuring SSE server with options") // Log options
 
 		// Create the SSE server with the options
 		sseServer := mcpserver.NewSSEServer(srv, sseOptions...)
 
 		// Start the SSE server in a goroutine
 		go func() {
-			s.logger.WithFields(logrus.Fields{
-				"baseURL": sseBaseURL,
-				"port":    port,
-			}).Debug("SSE server is running. Press Ctrl+C to stop.")
-
 			// Start the SSE server on the specified port
 			// The server will listen on all interfaces (0.0.0.0)
 			listenAddr := ":" + port
 			s.logger.WithFields(logrus.Fields{
 				"listenAddr": listenAddr,
 				"baseURL":    sseBaseURL,
-				"serverName": "package-version", // Use the known server name
-			}).Debug("Starting SSE server")
+				"serverName": "package-version",
+			}).Info("Attempting to start SSE server") // Changed level to Info
 
 			// Log the final configuration being used for SSE
 			s.logger.WithFields(logrus.Fields{
@@ -284,7 +278,12 @@ func (s *PackageVersionServer) Start(transport, port, baseURL string) error {
 			s.logger.Debug("To test routes, run: curl " + sseBaseURL + "/sse")
 
 			if err := sseServer.Start(listenAddr); err != nil {
+				// Log the error before sending it to the channel
+				s.logger.WithError(err).Error("SSE server failed to start or encountered a runtime error")
 				errCh <- fmt.Errorf("SSE server error: %w", err)
+			} else {
+				// This part might only be reached on graceful shutdown without error
+				s.logger.Info("SSE server stopped gracefully")
 			}
 		}()
 
@@ -514,11 +513,15 @@ func (s *PackageVersionServer) registerDockerTool(srv *mcpserver.MCPServer) {
 		),
 		// If the above doesn't work, maybe try a deeper structure like this:
 		// mcp.WithArray("filterTags",
-		// 	 mcp.Description("Array of regex patterns to filter tags"),
-		// 	 mcp.Items(map[string]interface{}{
-		// 			"type": "string",
-		// 			"description": "Regex pattern to filter Docker tags",
-		// 	 }),
+		//
+		//	mcp.Description("Array of regex patterns to filter tags"),
+		//	mcp.Items(map[string]interface{}{
+		//
+		// "type": "string",
+		// "description": "Regex pattern to filter Docker tags",
+		//
+		//	}),
+		//
 		// ),
 		mcp.WithBoolean("includeDigest",
 			mcp.Description("Include image digest in results"),
