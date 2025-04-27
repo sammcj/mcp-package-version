@@ -23,6 +23,11 @@ RUN CGO_ENABLED=0 GOOS=linux make build
 # Final stage
 FROM alpine:latest
 
+ARG BASE_URL="http://0.0.0.0"
+ARG PORT="18080"
+ENV BASE_URL=${BASE_URL}
+ENV PORT=${PORT}
+
 # Set working directory
 WORKDIR /app
 
@@ -33,7 +38,7 @@ RUN apk --no-cache add ca-certificates
 COPY --from=builder /app/bin/mcp-package-version .
 
 # Expose port
-EXPOSE 18080
+EXPOSE ${PORT}
 
 # Run the application with SSE transport by default
-CMD ["./mcp-package-version", "--transport", "sse", "--port", "18080", "--base-url", "http://0.0.0.0"]
+CMD ["./mcp-package-version", "--transport", "sse", "--port", "${PORT}", "--base-url", "${BASE_URL}"]
