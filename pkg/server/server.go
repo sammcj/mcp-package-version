@@ -220,29 +220,14 @@ func (s *PackageVersionServer) Start(transport, port, baseURL string) error {
 			sseBaseURL = fmt.Sprintf("%s:%s", baseURL, port)
 		} else {
 			// Otherwise, use the baseURL as is, assuming it already includes the port if needed
+			// Otherwise, use the baseURL as is. It should contain the correct
+			// scheme, hostname, and port (if non-standard) for external access.
 			sseBaseURL = baseURL
 		}
 
-		// Try without any path component first
-		// The mcp-go package might expect the baseURL to be just the host and port
-		// without any path component
-
-		// Remove any path component from the baseURL
-		if strings.Contains(sseBaseURL, "/") {
-			parts := strings.Split(sseBaseURL, "/")
-			if len(parts) >= 3 { // http://hostname/path -> ["http:", "", "hostname", "path"]
-				sseBaseURL = parts[0] + "//" + parts[2] // Reconstruct http://hostname
-				if strings.Contains(parts[2], ":") {
-					// If hostname already includes port, use it as is
-					sseBaseURL = parts[0] + "//" + parts[2]
-				} else {
-					// Otherwise, append the port
-					sseBaseURL = fmt.Sprintf("%s:%s", sseBaseURL, port)
-				}
-			}
-		}
-
-		s.logger.WithField("baseURL", sseBaseURL).Debug("Configuring SSE server with base URL")
+		// The --base-url provided by the user is assumed to be the correct external URL.
+		// We no longer attempt to modify it or append the internal port, except for the localhost default case handled above.
+		s.logger.WithField("final_advertised_base_url", sseBaseURL).Debug("Using final base URL for SSE configuration")
 
 		// Create the SSE server with the correct base URL
 		// The WithBaseURL option is critical for the client to connect properly
