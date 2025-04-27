@@ -8,6 +8,7 @@ services:
     container_name: *name
     hostname: *name
     image: ghcr.io/sammcj/mcp-package-version:main
+    stop_grace_period: 5s
     # build:
     #   context: https://github.com/sammcj/mcp-package-version.git # To build from source
     environment:
@@ -30,4 +31,6 @@ services:
     #   traefik.http.routers.mcp-package-version.tls.domains[0].main: "*.my.domain"
     #   traefik.http.routers.mcp-package-version.service: mcp-package-version-service
     #   traefik.http.services.mcp-package-version-service.loadbalancer.server.port: 18080
+    #   traefik.http.services.mcp-package-version-service.loadbalancer.passhostheader: true
+    #   traefik.http.services.mcp-package-version-service.loadbalancer.responseforwarding.flushinterval: 100ms # Might help with SSE performance
     #   traefik.docker.network: traefik-network
