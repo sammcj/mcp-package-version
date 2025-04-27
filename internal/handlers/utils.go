@@ -77,7 +77,16 @@ func MakeRequestWithLogger(client HTTPClient, logger *logrus.Logger, method, url
 		}
 		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil && logger != nil {
+			logger.WithFields(logrus.Fields{
+				"method": method,
+				"url":    url,
+				"error":  err.Error(),
+			}).Error("Failed to close response body")
+		}
+	}()
 
 	// Read response body
 	body, err := io.ReadAll(resp.Body)

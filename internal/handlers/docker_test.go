@@ -100,7 +100,7 @@ func TestDockerHandler_GetLatestVersion(t *testing.T) {
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
 
-			 // Only validate tool result format if we have a result
+			// Only validate tool result format if we have a result
 			if result != nil {
 				validateToolResult(t, result)
 			}
@@ -116,30 +116,30 @@ func TestDockerMCPResultFormat(t *testing.T) {
 
 	// This would be the code if we wanted to run the test
 	/*
-	// Create a logger for testing
-	logger := logrus.New()
-	logger.SetLevel(logrus.DebugLevel)
+		// Create a logger for testing
+		logger := logrus.New()
+		logger.SetLevel(logrus.DebugLevel)
 
-	// Create a shared cache for testing
-	sharedCache := &sync.Map{}
+		// Create a shared cache for testing
+		sharedCache := &sync.Map{}
 
-	// Create a handler
-	handler := NewDockerHandler(logger, sharedCache)
+		// Create a handler
+		handler := NewDockerHandler(logger, sharedCache)
 
-	// Create valid arguments
-	args := map[string]interface{}{
-		"image":    "debian",
-		"registry": "dockerhub",
-		"limit":    float64(2),
-	}
+		// Create valid arguments
+		args := map[string]interface{}{
+			"image":    "debian",
+			"registry": "dockerhub",
+			"limit":    float64(2),
+		}
 
-	// Call the handler
-	result, err := handler.GetLatestVersion(context.Background(), args)
-	assert.NoError(t, err)
-	assert.NotNil(t, result)
+		// Call the handler
+		result, err := handler.GetLatestVersion(context.Background(), args)
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
 
-	// Validate the result structure
-	validateToolResultStructure(t, result)
+		// Validate the result structure
+		validateToolResultStructure(t, result)
 	*/
 }
 
@@ -165,28 +165,4 @@ func validateToolResult(t *testing.T, result *mcp.CallToolResult) {
 	if textContent != nil {
 		assert.NotEmpty(t, textContent.Text, "Text content should not be empty")
 	}
-}
-
-// Helper function to validate the structure of Docker tool results
-func validateToolResultStructure(t *testing.T, result *mcp.CallToolResult) {
-	// Safety check
-	if result == nil || len(result.Content) == 0 {
-		t.Log("Result or content is nil/empty")
-		return
-	}
-
-	// First content item should be text content with JSON
-	textContent, ok := result.Content[0].(*mcp.TextContent)
-	assert.True(t, ok, "First content item should be text content")
-
-	if !ok || textContent == nil {
-		t.Log("Content is not text content or is nil")
-		return
-	}
-
-	// The text should be valid JSON representing an array of DockerImageVersion objects
-	assert.Contains(t, textContent.Text, "[", "Result should be a JSON array")
-	assert.Contains(t, textContent.Text, "name", "Result should contain image name")
-	assert.Contains(t, textContent.Text, "tag", "Result should contain image tag")
-	assert.Contains(t, textContent.Text, "registry", "Result should contain registry name")
 }

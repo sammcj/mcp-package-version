@@ -1,5 +1,11 @@
-# TESTING
+# ADDITIONAL IMPORTANT RULES
 
-- **⚠️ CRITICAL TESTING INSTRUCTIONS - Whenever adding new features you must always create accompanying unit tests.**
-- **⚠️ CRITICAL TESTING INSTRUCTIONS - After completing the tasks the user has requested you MUST run the tests (`make test`) to ensure they all pass. If any tests fail, you MUST fix them before proceeding. ⚠️**
-- **⚠️ CRITICAL TESTING INSTRUCTIONS - When you are ready to run the mcp server to call its functions, do a make - this will build the application and automatically make it available to you so you can call its tools.**
+## **⚠️ CRITICAL TESTING INSTRUCTIONS ⚠️**
+
+- Before completing work you must run `make lint` to check for any linting errors.
+- Whenever adding new features you must always create accompanying unit tests.
+- After completing the tasks the user has requested you MUST run the tests (`make test`) to ensure they all pass. If any tests fail, you MUST fix them before proceeding.
+
+## Installing and connecting to the package-version MCP server
+
+- When you are ready to build and run the mcp server to call its functions simply do a `make` - this will build the application and it will be automatically madeavailable to you so you can call its tools / functions directly. No need to run the server manually or stop and ask the user to do so.

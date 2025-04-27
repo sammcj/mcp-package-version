@@ -1,3 +1,8 @@
+// This file contains tests that validate the internal structure of tool schemas
+// defined directly within this test suite, particularly focusing on the correct
+// definition and structure of array parameters using the mcp-go library helpers.
+// It does not validate against the external official MCP schema but ensures
+// the library generates structurally sound schemas for complex types.
 package server_test
 
 import (

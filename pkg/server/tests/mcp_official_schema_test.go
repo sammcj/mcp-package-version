@@ -1,3 +1,8 @@
+// This file contains tests that validate tool schemas defined directly within
+// this test suite against the official MCP (Model Context Protocol) schema
+// fetched from its canonical source on GitHub.
+// The primary purpose is to ensure that the schemas generated using the
+// mcp-go library helpers align with the external, official MCP specification.
 package tests
 
 import (
@@ -20,7 +25,10 @@ func TestValidateSchemaDirectly(t *testing.T) {
 	if err != nil || resp.StatusCode != http.StatusOK {
 		t.Skip("Could not access official MCP schema, skipping test")
 	}
-	defer resp.Body.Close()
+	defer func() {
+		err := resp.Body.Close()
+		require.NoError(t, err) // Check the error from closing the body
+	}()
 
 	// Read the official schema
 	schemaData, err := io.ReadAll(resp.Body)
