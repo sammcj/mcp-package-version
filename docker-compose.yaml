@@ -1,0 +1,33 @@
+# Example docker-compose.yaml for mcp-package-version
+
+# Will expose the service on this URL:
+# https://mcp-package-version.my.domain/sse
+
+services:
+  &name mcp-package-version:
+    container_name: *name
+    hostname: *name
+    image: ghcr.io/sammcj/mcp-package-version:main
+    # build:
+    #   context: https://github.com/sammcj/mcp-package-version.git # To build from source
+    environment:
+      BASE_URL: http://mcp-package-version:18080
+      # BASE_URL: https://mcp-package-version.my.domain # If you were running a reverse proxy, e.g. traefik in front
+      LOG_LEVEL: debug
+    ports:
+      - 18080:18080
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    # Below is an example of how to run this with traefik
+    # networks:
+    #   - traefik-network
+    # labels:
+    #   traefik.enable: true
+    #   traefik.http.routers.mcp-package-version.rule: Host(`mcp-package-version.my.domain`) # https://mcp-package-version.my.domain/sse
+    #   traefik.http.routers.mcp-package-version.tls.certresolver: le
+    #   traefik.http.routers.mcp-package-version.entrypoints: websecure
+    #   traefik.http.routers.mcp-package-version.tls.domains[0].main: "*.my.domain"
+    #   traefik.http.routers.mcp-package-version.service: mcp-package-version-service
+    #   traefik.http.services.mcp-package-version-service.loadbalancer.server.port: 18080
+    #   traefik.docker.network: traefik-network

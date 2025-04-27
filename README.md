@@ -24,6 +24,14 @@ This server helps LLMs ensure they're recommending up-to-date package versions w
 
 ![tooling with and without mcp-package-version](images/with-without.jpg)
 
+- [Package Version MCP Server](#package-version-mcp-server)
+  - [Screenshot](#screenshot)
+  - [Installation](#installation)
+  - [Usage](#usage)
+  - [Tools](#tools)
+  - [Releases and CI/CD](#releases-and-cicd)
+  - [License](#license)
+
 ## Installation
 
 Requirements:
@@ -110,29 +118,29 @@ The server supports two transport modes: stdio (default) and SSE (Server-Sent Ev
 mcp-package-version
 ```
 
-Or if you built it locally:
-
-```bash
-./bin/mcp-package-version
-```
-
 ### SSE Transport
 
 ```bash
-mcp-package-version --transport sse --port 18080 --base-url http://localhost
+mcp-package-version --transport sse --port 18080 --base-url "http://localhost:18080"
 ```
 
-Or if you built it locally:
-
-```bash
-./bin/mcp-package-version --transport sse --port 18080 --base-url http://localhost
-```
+This would make the server available to clients at `http://localhost:18080/sse` (Note the `/sse` suffix!).
 
 #### Command-line Options
 
 - `--transport`, `-t`: Transport type (stdio or sse). Default: stdio
 - `--port`: Port to use for SSE transport. Default: 18080
 - `--base-url`: Base URL for SSE transport. Default: http://localhost
+
+### Docker Images
+
+Docker images are available from GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/sammcj/mcp-package-version:main
+```
+
+You can also see the example [docker-compose.yaml](docker-compose.yaml).
 
 ## Tools
 
@@ -387,20 +395,6 @@ This project uses GitHub Actions for continuous integration and deployment. The 
 1. Builds and tests the application on every push to the main branch and pull requests
 2. Creates a release when a tag with the format `v*` (e.g., `v1.0.0`) is pushed
 3. Builds and pushes Docker images to GitHub Container Registry
-
-### Docker Images
-
-Docker images are available from GitHub Container Registry:
-
-```bash
-docker pull ghcr.io/sammcj/mcp-package-version:main
-```
-
-Or with a specific version:
-
-```bash
-docker pull ghcr.io/sammcj/mcp-package-version:v2.0.0
-```
 
 ## License
 
