@@ -4,24 +4,21 @@ FROM golang:1.24-alpine AS builder
 # Set working directory
 WORKDIR /app
 
+# Install build dependencies (make and git for versioning)
+RUN apk add --no-cache make git
+
 # Copy go.mod and go.sum files
 COPY go.mod go.sum ./
 
 # Download dependencies
 RUN go mod download
 
-# Copy the source code
+# Copy the source code (including Makefile)
 COPY . .
 
-# Build the application with version information
-ARG VERSION=0.1.0-dev
-ARG COMMIT=unknown
-ARG BUILD_DATE=unknown
-
-# Build with version information
-RUN CGO_ENABLED=0 GOOS=linux go build \
-  -ldflags "-X github.com/sammcj/mcp-package-version/v2/pkg/version.Version=${VERSION} -X github.com/sammcj/mcp-package-version/v2/pkg/version.Commit=${COMMIT} -X github.com/sammcj/mcp-package-version/v2/pkg/version.BuildDate=${BUILD_DATE}" \
-  -o mcp-package-version .
+# Build the application using the Makefile
+# CGO_ENABLED=0 and GOOS=linux ensure a static Linux binary for the final stage
+RUN CGO_ENABLED=0 GOOS=linux make build
 
 # Final stage
 FROM alpine:latest
@@ -32,8 +29,8 @@ WORKDIR /app
 # Install CA certificates for HTTPS requests
 RUN apk --no-cache add ca-certificates
 
-# Copy the binary from the builder stage
-COPY --from=builder /app/mcp-package-version .
+# Copy the binary from the builder stage (using the path from Makefile)
+COPY --from=builder /app/bin/mcp-package-version .
 
 # Expose port
 EXPOSE 18080

@@ -21,8 +21,8 @@ import (
 )
 
 const (
-	// CacheTTL is the time-to-live for cached data (1 hour)
-	CacheTTL = 1 * time.Hour
+	// CacheTTL is the time-to-live for cached data (12 hours)
+	CacheTTL = 12 * time.Hour
 	// MaxLogSize is the maximum size of the log file in megabytes before rotation
 	MaxLogSize = 1
 	// MaxLogBackups is the maximum number of old log files to retain

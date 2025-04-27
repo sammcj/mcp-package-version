@@ -65,7 +65,7 @@ make
 You can also run the server in a container:
 
 ```bash
-docker run -p 18080:18080 ghcr.io/sammcj/mcp-package-version:latest
+docker run -p 18080:18080 ghcr.io/sammcj/mcp-package-version:main
 ```
 
 Note: If running in a container, you'll need to configure the client to use the URL instead of command, e.g.:
@@ -393,7 +393,7 @@ This project uses GitHub Actions for continuous integration and deployment. The 
 Docker images are available from GitHub Container Registry:
 
 ```bash
-docker pull ghcr.io/sammcj/mcp-package-version:latest
+docker pull ghcr.io/sammcj/mcp-package-version:main
 ```
 
 Or with a specific version:
