@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.0.22](https://github.com/sammcj/mcp-package-version/compare/v2.0.21...v2.0.22) (2025-04-27)
+
+
+### Bug Fixes
+
+* **docker:** improve dockerfile ([9e060dd](https://github.com/sammcj/mcp-package-version/commit/9e060dde69ae48a6c98b73b31e233841dd60ee9b))
+
 ### [2.0.19](https://github.com/sammcj/mcp-package-version/compare/v2.0.18...v2.0.19) (2025-04-24)
 
 
