@@ -89,7 +89,8 @@ func NewPackageVersionServer(version, commit, buildDate string) *PackageVersionS
 		Compress:   true,          // compress old log files
 	}
 
-	// Set logger output to the rotated log file
+	// Set logger output to the rotated log file initially
+	// We will add stdout later only if transport is SSE
 	logger.SetOutput(logRotator)
 
 	// Create a fallback logger that discards all output in case we can't open the log file
@@ -195,6 +196,12 @@ func (s *PackageVersionServer) Start(transport, port, baseURL string) error {
 	errCh := make(chan error, 1)
 
 	if transport == "sse" {
+		// Configure logger to also write to stdout for SSE mode
+		logRotator := s.logger.Out.(*lumberjack.Logger) // Get the existing rotator
+		multiWriter := io.MultiWriter(os.Stdout, logRotator)
+		s.logger.SetOutput(multiWriter)
+		s.logger.Debug("Configured logger for SSE mode (file + stdout)")
+
 		// Create an SSE server
 		// Ensure the baseURL has the correct format: http://hostname:port
 		// Remove trailing slash if present
