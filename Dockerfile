@@ -43,5 +43,5 @@ COPY --from=builder /app/bin/mcp-package-version .
 # Expose port
 EXPOSE ${PORT}
 
-# Run the application with SSE transport by default
-CMD ["./mcp-package-version", "--transport", "sse", "--port", "${PORT}", "--base-url", "${BASE_URL}"]
+# Run the application with SSE transport by default, using shell form for variable substitution
+CMD ./mcp-package-version --transport sse --port ${PORT} --base-url ${BASE_URL}
