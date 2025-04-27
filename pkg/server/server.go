@@ -67,6 +67,17 @@ func NewPackageVersionServer(version, commit, buildDate string) *PackageVersionS
 		FullTimestamp: true,
 	})
 
+	// Set log level based on environment variable
+	logLevelStr := os.Getenv("LOG_LEVEL")
+	logLevel, err := logrus.ParseLevel(logLevelStr)
+	if err == nil {
+		logger.SetLevel(logLevel)
+	} else {
+		// Default to Info level if LOG_LEVEL is not set or invalid
+		logger.SetLevel(logrus.InfoLevel)
+	}
+	logger.WithField("log_level", logger.GetLevel().String()).Debug("Log level set")
+
 	logFilePath := getLogFilePath()
 
 	// Configure log rotation
@@ -261,6 +272,12 @@ func (s *PackageVersionServer) Start(transport, port, baseURL string) error {
 				"baseURL":    sseBaseURL,
 				"serverName": "package-version", // Use the known server name
 			}).Debug("Starting SSE server")
+
+			// Log the final configuration being used for SSE
+			s.logger.WithFields(logrus.Fields{
+				"listen_address":      listenAddr,
+				"advertised_base_url": sseBaseURL,
+			}).Info("SSE server configured")
 
 			// Log the available routes for debugging
 			s.logger.Debug("Expected SSE routes:")

@@ -23,10 +23,13 @@ RUN CGO_ENABLED=0 GOOS=linux make build
 # Final stage
 FROM alpine:latest
 
-ARG BASE_URL="http://0.0.0.0"
+ARG BASE_URL="http://mcp-package-version"
 ARG PORT="18080"
 ENV BASE_URL=${BASE_URL}
 ENV PORT=${PORT}
+
+# Set default log level (can be overridden with -e LOG_LEVEL=debug)
+ENV LOG_LEVEL=info
 
 # Set working directory
 WORKDIR /app
