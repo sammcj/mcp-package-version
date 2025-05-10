@@ -8,12 +8,13 @@ type PackageVersion struct {
 	Registry       string  `json:"registry"`
 	Skipped        bool    `json:"skipped,omitempty"`
 	SkipReason     string  `json:"skipReason,omitempty"`
+	Metadata       *string `json:"metadata,omitempty"` // JSON string with additional package-specific metadata
 }
 
 // VersionConstraint represents constraints for package version updates
 type VersionConstraint struct {
-	MajorVersion   *int  `json:"majorVersion,omitempty"`
-	ExcludePackage bool  `json:"excludePackage,omitempty"`
+	MajorVersion   *int `json:"majorVersion,omitempty"`
+	ExcludePackage bool `json:"excludePackage,omitempty"`
 }
 
 // VersionConstraints maps package names to their constraints
