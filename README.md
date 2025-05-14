@@ -16,7 +16,7 @@ An MCP server that provides tools for checking latest stable package versions fr
 
 This server helps LLMs ensure they're recommending up-to-date package versions when writing code.
 
-**IMPORTANT: As of version 2.0.0, mcp-package-version has been rewritten in Go, as such the configuration needs to be updated in your client - see the [Installation](#installation) section for more details.**
+**IMPORTANT: I'm slowly moving across this tool to a component of my [mcp-devtools](https://github.com/sammcj/mcp-devtools) server**
 
 <a href="https://glama.ai/mcp/servers/zkts2w92ba"><img width="380" height="200" src="https://glama.ai/mcp/servers/zkts2w92ba/badge" alt="https://github.com/sammcj/mcp-package-version MCP server" /></a>
 
