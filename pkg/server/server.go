@@ -129,13 +129,13 @@ func (s *PackageVersionServer) Initialize(srv *mcpserver.MCPServer) error {
 		"pid": pid,
 	}).Debug("Starting package-version MCP server")
 
-	s.logger.Debug("Initialising package version handlers")
-
-	// Register tools and handlers
+	s.logger.Debug("Initialising package version handlers") // Register tools and handlers
 	s.registerNpmTool(srv)
 	s.registerPythonTools(srv)
 	s.registerJavaTools(srv)
 	s.registerGoTool(srv)
+	s.registerRustTool(srv)
+	s.registerDartTool(srv)
 	s.registerBedrockTools(srv)
 	s.registerDockerTool(srv)
 	s.registerSwiftTool(srv)

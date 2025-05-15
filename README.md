@@ -8,6 +8,8 @@ An MCP server that provides tools for checking latest stable package versions fr
 - PyPI (Python)
 - Maven Central (Java)
 - Go Proxy (Go)
+- Crates.io (Rust)
+- pub.dev (Dart/Flutter)
 - Swift Packages (Swift)
 - AWS Bedrock (AI Models)
 - Docker Hub (Container Images)
@@ -19,6 +21,8 @@ This server helps LLMs ensure they're recommending up-to-date package versions w
 **IMPORTANT: I'm slowly moving across this tool to a component of my [mcp-devtools](https://github.com/sammcj/mcp-devtools) server**
 
 <a href="https://glama.ai/mcp/servers/zkts2w92ba"><img width="380" height="200" src="https://glama.ai/mcp/servers/zkts2w92ba/badge" alt="https://github.com/sammcj/mcp-package-version MCP server" /></a>
+
+Now with support for Rust crates!
 
 ## Screenshot
 
@@ -279,6 +283,52 @@ Check the latest versions of Go packages from go.mod:
           "version": "v1.5.0"
         }
       ]
+    }
+  }
+}
+```
+
+### Rust Packages
+
+Check the latest versions of Rust crates from Cargo.toml:
+
+```json
+{
+  "name": "check_rust_versions",
+  "arguments": {
+    "dependencies": {
+      "serde": "1.0.136",
+      "tokio": "1.17.0",
+      "rocket": "0.5.0-rc.1",
+      "clap": { 
+        "version": "3.1.0",
+        "features": ["derive", "cargo"]
+      },
+      "log": {
+        "version": "0.4.17",
+        "optional": true
+      }
+    }
+  }
+}
+```
+
+### Dart Packages
+
+Check the latest versions of Dart packages from pubspec.yaml:
+
+```json
+{
+  "name": "check_dart_versions",
+  "arguments": {
+    "dependencies": {
+      "flutter": "sdk: flutter",
+      "http": "^0.13.4",
+      "provider": "^6.0.2",
+      "firebase_core": "^1.12.0",
+      "shared_preferences": {
+        "version": "^2.0.13"
+      }
     }
   }
 }
