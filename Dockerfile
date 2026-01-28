@@ -21,7 +21,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux make build
 
 # Final stage
-FROM alpine:latest
+FROM alpine:3.23.3
 
 # The base url is where you want to point your clients at (don't include the /sse endpoint)
 ARG BASE_URL="http://mcp-package-version"
