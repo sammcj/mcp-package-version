@@ -32,6 +32,10 @@ This server helps LLMs ensure they're recommending up-to-date package versions w
   - [Releases and CI/CD](#releases-and-cicd)
   - [License](#license)
 
+## Hosted deployment
+
+A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/sammcj-mcp-package-version).
+
 ## Installation
 
 Requirements:
